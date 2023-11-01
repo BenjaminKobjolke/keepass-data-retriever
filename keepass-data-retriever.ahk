@@ -2,7 +2,7 @@
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 #SingleInstance force
 #Persistent ;Script nicht beenden nach der Auto-Execution-Section
-
+SetTitleMatchMode, 3
 SetWorkingDir %A_ScriptDir%
 CoordMode, Mouse, Screen
 
@@ -12,9 +12,21 @@ Menu, tray, add  ; Creates a separator line.
 Menu, tray, add, Reload  
 Menu, tray, add, Exit
 Menu, Tray, Icon, icon.ico
+
+directMode := 0
+if (%1% = directmode) {
+	directMode := 1
+	GoSub, Main
+	return
+}
+
+return 
+!+r:: 
+	GoSub, Main
 return
 
-!+r::  ; Press F1 to execute
+Main:
+
 	MouseGetPos, xpos, ypos  ; Get mouse position
 
 	; Calculate centered position
@@ -35,6 +47,10 @@ Enter::
 	Gui, Submit  ; Save the input to the UserInput variable
 	RunWait, % "python main.py " UserInput,, hide  ; Replace 'main.py' with your Python script
 	Gui, Destroy  ; Destroy the GUI
+
+	if (directMode = 1) {
+		ExitApp
+	}
 return
 
 Esc::
