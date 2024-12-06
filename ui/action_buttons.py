@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import Callable
+from .dark_button import DarkButton
 
 class ActionButtons:
     def __init__(self, parent: ttk.Frame, on_action: Callable):
-        self.frame = ttk.Frame(parent)
+        self.frame = ttk.Frame(parent, style='Dark.TFrame')
         self.on_action = on_action
         self._create_buttons()
 
@@ -18,12 +19,13 @@ class ActionButtons:
         ]
         
         for text, action in actions:
-            btn = ttk.Button(
+            btn = DarkButton(
                 self.frame,
                 text=text,
-                command=lambda a=action: self.on_action(a)
+                command=lambda a=action: self.on_action(a),
+                width=30  # Make buttons wider
             )
-            btn.pack(fill=tk.X, pady=1)
+            btn.pack(fill=tk.X, pady=2)  # Slightly more vertical spacing
 
     def show(self):
         """Show action buttons"""

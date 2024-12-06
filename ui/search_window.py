@@ -6,6 +6,7 @@ from .status_display import StatusDisplay
 from .results_view import ResultsView
 from .action_buttons import ActionButtons
 from .hotkey_manager import HotkeyManager
+from .dark_entry import DarkEntry
 
 class SearchWindow:
     def __init__(self, on_search: Callable, on_action: Callable, on_select: Callable):
@@ -21,7 +22,8 @@ class SearchWindow:
             self._handle_select,
             self._handle_action,
             self.hide,
-            self._handle_reset  # Add reset handler
+            self._handle_reset,
+            DarkEntry  # Pass DarkEntry class directly
         )
         self.results = ResultsView(self.window.get_main_frame())
         self.actions = ActionButtons(self.window.get_main_frame(), on_action)

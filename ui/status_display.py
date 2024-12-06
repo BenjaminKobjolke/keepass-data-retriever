@@ -3,7 +3,13 @@ from tkinter import ttk
 
 class StatusDisplay:
     def __init__(self, parent: ttk.Frame):
-        self.label = ttk.Label(parent, text="", wraplength=280)
+        self.label = ttk.Label(
+            parent,
+            text="",
+            wraplength=360,  # Increased for larger window
+            style='Dark.TLabel',
+            font=('Segoe UI', 11)  # Larger font
+        )
         self.label.pack(padx=5, pady=(0, 5))
 
     def show_search_results(self, entries, single_entry=None):

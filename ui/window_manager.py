@@ -6,6 +6,20 @@ import win32con
 import time
 
 class WindowManager:
+    # Dark theme colors
+    BG_COLOR = '#1e1e1e'  # Dark background
+    FG_COLOR = '#ffffff'  # White text
+    ENTRY_BG = '#2d2d2d'  # Slightly lighter for inputs
+    ENTRY_FG = '#ffffff'  # White text for inputs
+    BUTTON_BG = '#3d3d3d'  # Even lighter for buttons
+    BUTTON_FG = '#ffffff'  # White text for buttons
+    TRANSPARENCY = 0.9
+    
+    # Window sizes (increased by 30%)
+    WINDOW_WIDTH = 390  # 300 * 1.3
+    WINDOW_HEIGHT_NORMAL = 91  # 70 * 1.3
+    WINDOW_HEIGHT_EXPANDED = 520  # 400 * 1.3
+
     def __init__(self, root: tk.Tk):
         self.root = root
         self.window_expanded = False
@@ -13,12 +27,16 @@ class WindowManager:
         
         # Configure window
         self.root.overrideredirect(True)
-        self.root.attributes('-topmost', True)
-        self.root.configure(bg='white')
+        self.root.attributes('-topmost', True, '-alpha', self.TRANSPARENCY)
+        self.root.configure(bg=self.BG_COLOR)
+        
+        # Configure styles
+        self.style = ttk.Style()
+        self._configure_styles()
         
         # Create main frame
-        self.main_frame = ttk.Frame(self.root)
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        self.main_frame = ttk.Frame(self.root, style='Dark.TFrame')
+        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)  # Slightly larger padding
         
         # Create system tray menu
         self._create_tray_menu()
@@ -30,6 +48,47 @@ class WindowManager:
         
         # Start minimized
         self.root.withdraw()
+
+    def _configure_styles(self):
+        """Configure ttk styles for dark theme"""
+        # Frame style
+        self.style.configure('Dark.TFrame', 
+            background=self.BG_COLOR
+        )
+        
+        # Label style
+        self.style.configure('Dark.TLabel',
+            background=self.BG_COLOR,
+            foreground=self.FG_COLOR,
+            font=('Segoe UI', 11)  # Larger font
+        )
+        
+        # Entry style
+        self.style.configure('Dark.TEntry',
+            fieldbackground=self.ENTRY_BG,
+            foreground=self.FG_COLOR,
+            insertcolor=self.FG_COLOR,
+            borderwidth=1,
+            relief='solid',
+            font=('Segoe UI', 11)  # Larger font
+        )
+        self.style.map('Dark.TEntry',
+            fieldbackground=[('focus', self.ENTRY_BG)],
+            foreground=[('focus', self.FG_COLOR)]
+        )
+        
+        # Button style
+        self.style.configure('Dark.TButton',
+            background=self.BUTTON_BG,
+            foreground=self.FG_COLOR,
+            borderwidth=1,
+            relief='solid',
+            font=('Segoe UI', 11)  # Larger font
+        )
+        self.style.map('Dark.TButton',
+            background=[('active', self.ENTRY_BG)],
+            foreground=[('active', self.FG_COLOR)]
+        )
 
     def _create_tray_menu(self):
         """Create system tray menu"""
@@ -50,9 +109,9 @@ class WindowManager:
         offset_y = 20
         
         if self.window_expanded:
-            self.root.geometry(f"300x400+{mouse_x + offset_x}+{mouse_y + offset_y}")
+            self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT_EXPANDED}+{mouse_x + offset_x}+{mouse_y + offset_y}")
         else:
-            self.root.geometry(f"300x70+{mouse_x + offset_x}+{mouse_y + offset_y}")
+            self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT_NORMAL}+{mouse_x + offset_x}+{mouse_y + offset_y}")
 
     def _force_focus(self):
         """Force focus to our window"""

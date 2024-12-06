@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Callable, Optional
+from typing import Callable, Optional, Type
 from enum import Enum, auto
 
 class InputMode(Enum):
@@ -9,7 +9,9 @@ class InputMode(Enum):
     ACTION = auto()
 
 class InputManager:
-    def __init__(self, parent: ttk.Frame, on_search: Callable, on_select: Callable, on_action: Callable, on_escape: Callable, on_reset: Callable):
+    def __init__(self, parent: ttk.Frame, on_search: Callable, on_select: Callable, 
+                 on_action: Callable, on_escape: Callable, on_reset: Callable, 
+                 entry_class: Type[ttk.Entry]):
         self.on_search = on_search
         self.on_select = on_select
         self.on_action = on_action
@@ -17,20 +19,20 @@ class InputManager:
         self.on_reset = on_reset
         
         # Create input frame to position all inputs
-        self.frame = ttk.Frame(parent)
+        self.frame = ttk.Frame(parent, style='Dark.TFrame')
         self.frame.pack(padx=5, pady=5)
         
         # Create search entry
-        self.search_input = ttk.Entry(self.frame, width=30)
+        self.search_input = entry_class(self.frame, width=30)
         self.search_input.grid(row=0, column=0)
         
         # Create list selection input
-        self.list_input = ttk.Entry(self.frame, width=30)
+        self.list_input = entry_class(self.frame, width=30)
         self.list_input.grid(row=0, column=0)
         self.list_input.grid_remove()  # Hide initially
         
         # Create action selection input
-        self.action_input = ttk.Entry(self.frame, width=30)
+        self.action_input = entry_class(self.frame, width=30)
         self.action_input.grid(row=0, column=0)
         self.action_input.grid_remove()  # Hide initially
         
@@ -43,10 +45,6 @@ class InputManager:
         self.search_input.bind('<Escape>', self._handle_escape)
         self.list_input.bind('<Escape>', self._handle_escape)
         self.action_input.bind('<Escape>', self._handle_escape)
-        
-        # Configure style
-        self.style = ttk.Style()
-        self.style.configure('TEntry', padding='5')
         
         self.entries = []  # Store entries for list selection
         self.single_entry = None  # Store single entry for action mode
@@ -99,18 +97,14 @@ class InputManager:
         self.on_reset()  # Call reset callback to clear results
         self.show_search()
 
-    def _ensure_focus(self, widget: ttk.Entry):
-        """Ensure the widget has focus"""
-        self.frame.after(10, lambda: widget.focus_force())
-
     def show_search(self):
         """Show search input"""
         self.list_input.grid_remove()
         self.action_input.grid_remove()
         self.search_input.grid()
+        self.search_input.focus_force()
         self.search_input.select_range(0, tk.END)
         self.current_mode = InputMode.SEARCH
-        self._ensure_focus(self.search_input)
 
     def show_list(self, entries):
         """Show list selection input"""
@@ -126,8 +120,8 @@ class InputManager:
         self.search_input.grid_remove()
         self.action_input.grid_remove()
         self.list_input.grid()
+        self.list_input.focus_force()
         self.current_mode = InputMode.LIST
-        self._ensure_focus(self.list_input)
         print("Moving focus to list input")
 
     def show_actions(self):
@@ -135,8 +129,8 @@ class InputManager:
         self.search_input.grid_remove()
         self.list_input.grid_remove()
         self.action_input.grid()
+        self.action_input.focus_force()
         self.current_mode = InputMode.ACTION
-        self._ensure_focus(self.action_input)
         print("Moving focus to action input")
 
     def restore_last_mode(self):
