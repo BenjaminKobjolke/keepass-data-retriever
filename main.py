@@ -1,93 +1,107 @@
+#!/usr/bin/env python3
+
 import sys
-import argparse
+import os
+import getpass
+from pykeepass import PyKeePass
 import pyperclip
-import webbrowser
-from keepass_entry import KeePassEntryManager
-from ui import SearchWindow
-from typing import Optional
+from ui.search_window import SearchWindow
 
-class KeePassSearch:
-    def __init__(self, db_path: str, db_password: str):
-        self.entry_manager = KeePassEntryManager(db_path, db_password)
-        self.current_entry = None
-        self.last_search_term = ""
+class KeePassRetriever:
+    def __init__(self):
+        self.kp = None
+        self.window = None
+
+    def get_database_path(self):
+        """Get database path from environment or default"""
+        return os.getenv('KEEPASS_DATABASE', 'db.kdbx')
+
+    def get_password(self):
+        """Get password from command line or prompt"""
+        args = sys.argv[1:]
         
-        # Create window with callbacks
-        self.window = SearchWindow(
-            on_search=self.handle_search,
-            on_action=self.handle_action,
-            on_select=self.handle_select
-        )
+        # Check for --password argument
+        for i, arg in enumerate(args):
+            if arg == '--password' and i + 1 < len(args):
+                return args[i + 1]
+        
+        # If no password provided, prompt for it
+        return getpass.getpass('Enter KeePass password: ')
 
-    def handle_search(self, search_term: str):
-        """Handle search request"""
-        if not search_term:
-            return
-            
+    def connect_database(self):
+        """Connect to KeePass database"""
         try:
-            # Save search term
-            self.last_search_term = search_term
-            
-            # Search for entries
-            entries = self.entry_manager.search(search_term)
-            
-            if entries:
-                # Show list of entries
-                self.window.show_entries(entries)
-                if len(entries) == 1:
-                    self.current_entry = entries[0]
-            else:
-                self.current_entry = None
-                self.window.show_entries([])
-                
-        except Exception as e:
-            self.window.set_status(f"Error: {str(e)}")
+            db_path = self.get_database_path()
+            if not os.path.exists(db_path):
+                print(f"Error: Database file not found: {db_path}")
+                print("Set KEEPASS_DATABASE environment variable to specify database location")
+                sys.exit(1)
 
-    def handle_select(self, entry: 'PyKeePass.Entry'):
+            password = self.get_password()
+            self.kp = PyKeePass(db_path, password)
+            print("Successfully connected to KeePass database")
+        except Exception as e:
+            print(f"Error opening KeePass database: {e}")
+            sys.exit(1)
+
+    def handle_search(self, search_term):
+        """Handle search request"""
+        entries = []
+        for entry in self.kp.entries:
+            if (entry.title and search_term.lower() in entry.title.lower()) or \
+               (entry.username and search_term.lower() in entry.username.lower()):
+                entries.append(entry)
+        self.window.show_entries(entries)
+
+    def handle_select(self, entry):
         """Handle entry selection"""
-        self.current_entry = entry
         self.window.show_selected_entry(entry)
 
-    def handle_action(self, action: str):
+    def handle_action(self, action):
         """Handle action request"""
-        if not self.current_entry:
+        entry = self.window.input.single_entry
+        if not entry:
             return
-            
-        if action == 'username':
-            pyperclip.copy(self.current_entry.username or "")
-            self.window.set_status("Username copied")
-        elif action == 'password':
-            pyperclip.copy(self.current_entry.password or "")
-            self.window.set_status("Password copied")
-        elif action == 'url':
-            pyperclip.copy(self.current_entry.url or "")
-            self.window.set_status("URL copied")
-        elif action == 'open_url':
-            if self.current_entry.url:
-                webbrowser.open(self.current_entry.url)
-                self.window.set_status("Opening URL")
-            else:
-                self.window.set_status("No URL available")
-        
-        # Hide window
-        self.window.hide()
+
+        try:
+            if action == 'username' and entry.username:
+                pyperclip.copy(entry.username)
+            elif action == 'password' and entry.password:
+                pyperclip.copy(entry.password)
+            elif action == 'url' and entry.url:
+                pyperclip.copy(entry.url)
+            elif action == 'open_url' and entry.url:
+                import webbrowser
+                webbrowser.open(entry.url)
+        except Exception as e:
+            print(f"Error handling action {action}: {e}")
 
     def run(self):
-        """Start the application"""
-        self.window.run()
+        """Run the application"""
+        try:
+            # Connect to database
+            self.connect_database()
+
+            # Create and run window
+            self.window = SearchWindow(
+                self.handle_search,
+                self.handle_action,
+                self.handle_select
+            )
+            print("KeePass Data Retriever running. Press Alt+Shift+R to open search window.")
+            print("Right-click the window for menu options.")
+            self.window.run()
+
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            sys.exit(1)
 
 def main():
-    parser = argparse.ArgumentParser(description='KeePass Search GUI')
-    parser.add_argument('--db', default='db.kdbx', help='Path to KeePass database')
-    parser.add_argument('--password', required=True, help='Database password')
-    args = parser.parse_args()
-    
-    try:
-        app = KeePassSearch(args.db, args.password)
-        app.run()
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    app = KeePassRetriever()
+    app.run()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
