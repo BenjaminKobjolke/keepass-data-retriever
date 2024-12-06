@@ -2,3 +2,4 @@ pykeepass==4.0.6
 pyperclip==1.8.2
 pynput==1.7.6
 pywin32==306
+global-hotkeys==0.1.7

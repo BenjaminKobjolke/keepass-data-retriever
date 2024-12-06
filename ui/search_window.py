@@ -1,5 +1,7 @@
 import tkinter as tk
 from typing import Optional, Callable, List, Any
+import time
+from pynput.keyboard import Controller, Key
 from .window_manager import WindowManager
 from .input_manager import InputManager
 from .status_display import StatusDisplay
@@ -13,6 +15,9 @@ class SearchWindow:
         # Create root window
         self.root = tk.Tk()
         
+        # Initialize keyboard controller
+        self.keyboard = Controller()
+        
         # Initialize components
         self.window = WindowManager(self.root)
         self.status = StatusDisplay(self.window.get_main_frame())
@@ -23,10 +28,10 @@ class SearchWindow:
             self._handle_action,
             self.hide,
             self._handle_reset,
-            DarkEntry  # Pass DarkEntry class directly
+            DarkEntry
         )
         self.results = ResultsView(self.window.get_main_frame())
-        self.actions = ActionButtons(self.window.get_main_frame(), on_action)
+        self.actions = ActionButtons(self.window.get_main_frame(), self._handle_action)
         
         # Store callbacks
         self.on_search = on_search
@@ -51,8 +56,24 @@ class SearchWindow:
 
     def _handle_action(self, action: str):
         """Handle action request"""
-        self.on_action(action)
-        self.hide()
+        if action.startswith('paste_'):
+            # For paste actions, get the text first
+            base_action = action.replace('paste_', '')
+            self.on_action(base_action)  # This will copy to clipboard
+            # Hide window first
+            self.hide()
+            # Schedule the paste operation
+            self.root.after(1000, self._paste_text)
+        else:
+            # Normal copy/open actions
+            self.on_action(action)
+            self.hide()
+
+    def _paste_text(self):
+        """Type the clipboard content"""
+        with self.keyboard.pressed(Key.ctrl):
+            self.keyboard.press('v')
+            self.keyboard.release('v')
 
     def _handle_reset(self):
         """Handle reset request"""

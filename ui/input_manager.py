@@ -82,9 +82,18 @@ class InputManager:
             self.reset_to_search()  # Reset state and go back to search
         elif event.char.isdigit():
             number = int(event.char)
-            if 1 <= number <= 4:
-                actions = ['username', 'password', 'url', 'open_url']
+            if 1 <= number <= 6:  # Now handling 6 actions
+                actions = [
+                    'username',      # 1: Copy Username
+                    'password',      # 2: Copy Password
+                    'url',          # 3: Copy URL
+                    'open_url',      # 4: Open URL
+                    'paste_username', # 5: Paste Username
+                    'paste_password'  # 6: Paste Password
+                ]
                 self.on_action(actions[number - 1])
+                # Hide window after any action
+                self.on_escape()
         
         # Clear the input
         self.action_input.delete(0, tk.END)
