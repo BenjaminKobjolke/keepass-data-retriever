@@ -31,7 +31,7 @@ class SearchWindow:
             DarkEntry
         )
         self.results = ResultsView(self.window.get_main_frame())
-        self.actions = ActionButtons(self.window.get_main_frame(), self._handle_action)
+        self.actions = ActionButtons(self.window.get_main_frame(), lambda action: self._handle_action(action, self.input.get_current_entry()))
         
         # Store callbacks
         self.on_search = on_search
@@ -54,19 +54,23 @@ class SearchWindow:
         """Handle entry selection"""
         self.on_select(entry)
 
-    def _handle_action(self, action: str):
+    def _handle_action(self, action: str, entry: Any = None):
         """Handle action request"""
+        if not entry:
+            print("No entry selected")
+            return
+            
         if action.startswith('paste_'):
             # For paste actions, get the text first
             base_action = action.replace('paste_', '')
-            self.on_action(base_action)  # This will copy to clipboard
+            self.on_action(base_action, entry)  # Pass the entry along
             # Hide window first
             self.hide()
             # Schedule the paste operation
             self.root.after(1000, self._paste_text)
         else:
             # Normal copy/open actions
-            self.on_action(action)
+            self.on_action(action, entry)  # Pass the entry along
             self.hide()
 
     def _paste_text(self):
@@ -108,10 +112,12 @@ class SearchWindow:
             
         if len(entries) == 1:
             # Single entry - show actions directly
+            entry = entries[0]
             self.window.set_expanded(True)
-            self.status.show_search_results(entries, entries[0])
+            self.status.show_search_results(entries, entry)
+            # Set the entry in InputManager before showing actions
+            self.input.show_list(entries)  # This will set current_entry and call show_actions
             self.actions.show()
-            self.input.show_actions()
         else:
             # Multiple entries - show list
             self.window.set_expanded(True)
@@ -123,8 +129,10 @@ class SearchWindow:
         """Show selected entry"""
         self.results.clear()
         self.status.show_selected_entry(entry)
-        self.actions.show()
+        # Ensure InputManager has the current entry before showing actions
+        self.input.current_entry = entry
         self.input.show_actions()
+        self.actions.show()
 
     def set_search_text(self, text: str):
         """Set the search input text"""

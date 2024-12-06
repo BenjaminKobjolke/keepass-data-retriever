@@ -69,12 +69,14 @@ class KeePassRetriever:
         """Handle entry selection"""
         self.window.show_selected_entry(entry)
 
-    def handle_action(self, action):
+    def handle_action(self, action, entry=None):
         """Handle action request"""
-        entry = self.window.input.single_entry
         if not entry:
+            entry = self.window.input.single_entry
+        if not entry:
+            print("No entry selected")
             return
-
+            
         try:
             if action == 'username' and entry.username:
                 pyperclip.copy(entry.username)
@@ -85,6 +87,10 @@ class KeePassRetriever:
             elif action == 'open_url' and entry.url:
                 import webbrowser
                 webbrowser.open(entry.url)
+            elif action == 'paste_username' and entry.username:
+                pyperclip.copy(entry.username)
+            elif action == 'paste_password' and entry.password:
+                pyperclip.copy(entry.password)
         except Exception as e:
             print(f"Error handling action {action}: {e}")
 

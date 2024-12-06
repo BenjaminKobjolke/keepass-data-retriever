@@ -47,7 +47,7 @@ class InputManager:
         self.action_input.bind('<Escape>', self._handle_escape)
         
         self.entries = []  # Store entries for list selection
-        self.single_entry = None  # Store single entry for action mode
+        self.current_entry = None  # Store single entry for action mode
         self.current_mode = InputMode.SEARCH
 
     def _handle_escape(self, event):
@@ -69,7 +69,9 @@ class InputManager:
         elif event.char.isdigit():
             number = int(event.char)
             if number <= len(self.entries):
-                self.on_select(self.entries[number - 1])
+                selected_entry = self.entries[number - 1]
+                self.current_entry = selected_entry  # Store the selected entry
+                self.on_select(selected_entry)
         
         # Clear the input
         self.list_input.delete(0, tk.END)
@@ -91,7 +93,7 @@ class InputManager:
                     'paste_username', # 5: Paste Username
                     'paste_password'  # 6: Paste Password
                 ]
-                self.on_action(actions[number - 1])
+                self.on_action(actions[number - 1], self.current_entry)
                 # Hide window after any action
                 self.on_escape()
         
@@ -102,7 +104,7 @@ class InputManager:
     def reset_to_search(self):
         """Reset state and return to search input"""
         self.entries = []
-        self.single_entry = None
+        self.current_entry = None
         self.on_reset()  # Call reset callback to clear results
         self.show_search()
 
@@ -121,11 +123,11 @@ class InputManager:
         
         # If only one entry, go straight to action mode
         if len(entries) == 1:
-            self.single_entry = entries[0]
+            self.current_entry = entries[0]
             self.show_actions()
             return
             
-        self.single_entry = None
+        self.current_entry = None
         self.search_input.grid_remove()
         self.action_input.grid_remove()
         self.list_input.grid()
@@ -164,3 +166,7 @@ class InputManager:
             self.show_search()
             return True
         return False
+
+    def get_current_entry(self):
+        """Get the current entry"""
+        return self.current_entry

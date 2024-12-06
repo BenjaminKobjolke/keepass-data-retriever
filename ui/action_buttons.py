@@ -10,6 +10,7 @@ class ActionButtons:
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
         self.on_action = on_action
         self.keyboard = Controller()
+        self.current_entry = None
         self._create_buttons()
 
     def _create_buttons(self):
@@ -34,16 +35,22 @@ class ActionButtons:
 
     def _handle_action(self, action: str):
         """Handle button actions"""
+        if not self.current_entry:
+            print("No entry selected")
+            return
+        
+        print("Entry ", self.current_entry)
+            
         if action.startswith('paste_'):
             # For paste actions, get the text first
             base_action = action.replace('paste_', '')
-            self.on_action(base_action)  # This will copy to clipboard
+            self.on_action(base_action, self.current_entry)  # Pass the entry along
             
             # Schedule the paste operation
             self.frame.after(1000, lambda: self._paste_text())
         else:
             # Normal copy/open actions
-            self.on_action(action)
+            self.on_action(action, self.current_entry)  # Pass the entry along
 
     def _paste_text(self):
         """Type the clipboard content"""
@@ -51,10 +58,12 @@ class ActionButtons:
             self.keyboard.press('v')
             self.keyboard.release('v')
 
-    def show(self):
+    def show(self, entry=None):
         """Show action buttons"""
+        self.current_entry = entry
         self.frame.pack(fill=tk.X, padx=5, pady=5)
 
     def hide(self):
         """Hide action buttons"""
+        self.current_entry = None
         self.frame.pack_forget()
