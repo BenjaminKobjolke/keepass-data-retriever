@@ -13,8 +13,20 @@ class KeePassRetriever:
         self.window = None
 
     def get_database_path(self):
-        """Get database path from environment or default"""
-        return os.getenv('KEEPASS_DATABASE', 'db.kdbx')
+        """Get database path from command line, environment, or default"""
+        args = sys.argv[1:]
+        
+        # Check for --database argument
+        for i, arg in enumerate(args):
+            if arg == '--database' and i + 1 < len(args):
+                return args[i + 1]
+        
+        # Check environment variable
+        if db_path := os.getenv('KEEPASS_DATABASE'):
+            return db_path
+            
+        # Use default
+        return 'Database.kdbx'
 
     def get_password(self):
         """Get password from command line or prompt"""
@@ -34,12 +46,12 @@ class KeePassRetriever:
             db_path = self.get_database_path()
             if not os.path.exists(db_path):
                 print(f"Error: Database file not found: {db_path}")
-                print("Set KEEPASS_DATABASE environment variable to specify database location")
+                print("Use --database argument or set KEEPASS_DATABASE environment variable")
                 sys.exit(1)
 
             password = self.get_password()
             self.kp = PyKeePass(db_path, password)
-            print("Successfully connected to KeePass database")
+            print(f"Successfully connected to KeePass database: {db_path}")
         except Exception as e:
             print(f"Error opening KeePass database: {e}")
             sys.exit(1)
