@@ -1,1 +1,2 @@
 pyperclip~=1.8.2
+keepasshttp~=1.4.1
