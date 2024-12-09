@@ -16,6 +16,7 @@ class KeePassRetriever:
         self.window = None
         self.last_activity_time = time.time()
         self.idle_timeout = 1 * 60 * 60 # 1 hour 
+        #self.idle_timeout = 10 # 10 seconds
         self.is_locked = False
 
     def get_database_path(self):
