@@ -19,7 +19,7 @@ class StatusDisplay:
             return
             
         if single_entry:
-            text = f"Found: {single_entry.title}"
+            text = f"{single_entry.title}"
             if single_entry.url:
                 text += f"\nURL: {single_entry.url}"
             self.set_text(text)

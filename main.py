@@ -147,10 +147,6 @@ class KeePassRetriever:
             elif action == 'open_url' and entry.url:
                 import webbrowser
                 webbrowser.open(entry.url)
-            elif action == 'paste_username' and entry.username:
-                pyperclip.copy(entry.username)
-            elif action == 'paste_password' and entry.password:
-                pyperclip.copy(entry.password)
         except Exception as e:
             print(f"Error handling action {action}: {e}")
 

@@ -4,25 +4,32 @@ from typing import Callable
 import time
 from pynput.keyboard import Controller
 from .dark_button import DarkButton
+import pyautogui
 
 class ActionButtons:
-    def __init__(self, parent: ttk.Frame, on_action: Callable):
+    def __init__(self, parent: ttk.Frame, on_action: Callable, entry=None):
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
         self.on_action = on_action
         self.keyboard = Controller()
         self.current_entry = None
-        self._create_buttons()
+        self._create_buttons(entry)
 
-    def _create_buttons(self):
+    def _create_buttons(self, entry=None):
         """Create action buttons"""
         actions = [
-            ("Copy Username (1)", "username"),
-            ("Copy Password (2)", "password"),
-            ("Copy URL (3)", "url"),
-            ("Open URL (4)", "open_url"),
-            ("Paste Username (5)", "paste_username"),
-            ("Paste Password (6)", "paste_password")
+            ("Copy username (1)", "username"),
+            ("Copy password (2)", "password")
         ]
+        actions += [
+            ("Type username (3)", "type_username"),
+            ("Type password (4)", "type_password")
+        ]
+
+        if entry and entry.url:
+            actions.append(("Copy URL (5)", "url"))
+            actions.append(("Open URL (6)", "open_url"))
+        
+
         
         for text, action in actions:
             btn = DarkButton(
@@ -41,10 +48,10 @@ class ActionButtons:
         
         print("Entry ", self.current_entry)
             
-        if action.startswith('paste_'):
+        if action.startswith('type_'):
             # For paste actions, get the text first
-            base_action = action.replace('paste_', '')
-            self.on_action(base_action, self.current_entry)  # Pass the entry along
+            base_action = action.replace('type_', '')
+            #self.on_action(base_action, self.current_entry)  # Pass the entry along
             
             # Schedule the paste operation
             self.frame.after(1000, lambda: self._paste_text())

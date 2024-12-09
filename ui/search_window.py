@@ -9,6 +9,7 @@ from .results_view import ResultsView
 from .action_buttons import ActionButtons
 from .hotkey_manager import HotkeyManager
 from .dark_entry import DarkEntry
+import pyautogui
 
 class SearchWindow:
     def __init__(self, on_search: Callable, on_action: Callable, on_select: Callable):
@@ -31,7 +32,7 @@ class SearchWindow:
             DarkEntry
         )
         self.results = ResultsView(self.window.get_main_frame())
-        self.actions = ActionButtons(self.window.get_main_frame(), lambda action: self._handle_action(action, self.input.get_current_entry()))
+        self.actions = ActionButtons(self.window.get_main_frame(), lambda action: self._handle_action(action, self.input.get_current_entry()), self.input.get_current_entry())
         
         # Store callbacks
         self.on_search = on_search
@@ -59,19 +60,25 @@ class SearchWindow:
         if not entry:
             print("No entry selected")
             return
-            
-        if action.startswith('paste_'):
+        print("action is ", action)
+        if action.startswith('type_'):
             # For paste actions, get the text first
-            base_action = action.replace('paste_', '')
-            self.on_action(base_action, entry)  # Pass the entry along
+            base_action = action.replace('type_', '')
             # Hide window first
             self.hide()
             # Schedule the paste operation
-            self.root.after(1000, self._paste_text)
+            text_to_type = entry.username
+            if base_action == 'password':
+                text_to_type = entry.password
+            self.root.after(1000, self._type_text, text_to_type)
         else:
             # Normal copy/open actions
             self.on_action(action, entry)  # Pass the entry along
             self.hide()
+
+    def _type_text(self, text: str):
+        """Type the text"""
+        pyautogui.typewrite(text)
 
     def _paste_text(self):
         """Type the clipboard content"""

@@ -160,8 +160,8 @@ class WindowManager:
                 # Get window titles for debugging
                 active_title = win32gui.GetWindowText(active_hwnd)
                 our_title = win32gui.GetWindowText(self.hwnd)
-                print(f"Active window: {active_title} ({active_hwnd})")
-                print(f"Our window: {our_title} ({self.hwnd})")
+                #p rint(f"Active window: {active_title} ({active_hwnd})")
+                #p rint(f"Our window: {our_title} ({self.hwnd})")
                 
                 # Hide if active window is not our window
                 if active_hwnd != self.hwnd:

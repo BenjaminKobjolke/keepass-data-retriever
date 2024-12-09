@@ -88,10 +88,11 @@ class InputManager:
                 actions = [
                     'username',      # 1: Copy Username
                     'password',      # 2: Copy Password
-                    'url',          # 3: Copy URL
-                    'open_url',      # 4: Open URL
-                    'paste_username', # 5: Paste Username
-                    'paste_password'  # 6: Paste Password
+                    'type_username', # 3: Paste Username
+                    'type_password',  # 4: Paste Password
+                    'url',          # 5: Copy URL
+                    'open_url',      # 6: Open URL
+                                        
                 ]
                 self.on_action(actions[number - 1], self.current_entry)
                 # Hide window after any action
