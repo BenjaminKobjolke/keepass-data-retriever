@@ -32,8 +32,7 @@ class SearchWindow:
             DarkEntry
         )
         self.results = ResultsView(self.window.get_main_frame())
-        self.actions = ActionButtons(self.window.get_main_frame(), lambda action: self._handle_action(action, self.input.get_current_entry()), self.input.get_current_entry())
-        
+        self.actions = None
         # Store callbacks
         self.on_search = on_search
         self.on_action = on_action
@@ -53,6 +52,7 @@ class SearchWindow:
 
     def _handle_select(self, entry: Any):
         """Handle entry selection"""
+        self.actions = ActionButtons(self.window.get_main_frame(), lambda action: self._handle_action(action, entry), self.input.get_current_entry())        
         self.on_select(entry)
 
     def _handle_action(self, action: str, entry: Any = None):
@@ -89,7 +89,10 @@ class SearchWindow:
     def _handle_reset(self):
         """Handle reset request"""
         self.results.clear()
-        self.actions.hide()
+        if self.actions:
+            self.actions.hide()
+            self.actions = None
+
         self.window.set_expanded(False)
         self.status.set_text("")
 
@@ -102,15 +105,20 @@ class SearchWindow:
         self.window.show()
         self.input.restore_last_mode()
 
+
     def hide(self):
         """Hide the window"""
+        #if self.actions:
+            #self.actions.hide()  # Just hide the buttons, don't destroy them
         self.window.hide()
 
     def show_entries(self, entries: List[Any]):
         """Show search results"""
         # Clear previous results
         self.results.clear()
-        self.actions.hide()
+        if self.actions:
+            self.actions.hide()
+            self.actions = None  # Destroy actions when showing new entries
         
         if not entries:
             self.window.set_expanded(False)
@@ -124,7 +132,11 @@ class SearchWindow:
             self.status.show_search_results(entries, entry)
             # Set the entry in InputManager before showing actions
             self.input.show_list(entries)  # This will set current_entry and call show_actions
+            #self.actions.show()
+            self.actions = ActionButtons(self.window.get_main_frame(), lambda action: self._handle_action(action, entry), self.input.get_current_entry())
             self.actions.show()
+        
+
         else:
             # Multiple entries - show list
             self.window.set_expanded(True)
