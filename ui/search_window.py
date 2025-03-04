@@ -78,7 +78,10 @@ class SearchWindow:
 
     def _type_text(self, text: str):
         """Type the text"""
-        pyautogui.typewrite(text)
+        for character in text:
+            self.keyboard.press(character)
+            self.keyboard.release(character)
+            time.sleep(0.01)  # Small delay between keystrokes
 
     def _paste_text(self):
         """Type the clipboard content"""
