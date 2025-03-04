@@ -3,21 +3,30 @@ from typing import Optional, Callable, List, Any
 import time
 from pynput.keyboard import Controller, Key
 from .window_manager import WindowManager
-from .input_manager import InputManager
+from .input_manager import InputManager, InputMode
 from .status_display import StatusDisplay
 from .results_view import ResultsView
 from .action_buttons import ActionButtons
 from .hotkey_manager import HotkeyManager
 from .dark_entry import DarkEntry
 import pyautogui
+import sys
+import os
+
+# Add parent directory to path to import config
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import config
 
 class SearchWindow:
-    def __init__(self, on_search: Callable, on_action: Callable, on_select: Callable):
+    def __init__(self, on_search: Callable, on_action: Callable, on_select: Callable, on_connect: Callable):
         # Create root window
         self.root = tk.Tk()
         
         # Initialize keyboard controller
         self.keyboard = Controller()
+        
+        # Track last hotkey activation time
+        self.last_hotkey_time = 0  # Initialize to 0 (epoch time)
         
         # Initialize components
         self.window = WindowManager(self.root)
@@ -37,6 +46,7 @@ class SearchWindow:
         self.on_search = on_search
         self.on_action = on_action
         self.on_select = on_select
+        self.on_connect = on_connect  # New callback for lazy database connection
         
         # Bind events
         self.root.bind('<Return>', self._handle_return)
@@ -105,9 +115,42 @@ class SearchWindow:
 
     def show_window(self):
         """Show the window"""
+        # First check if we need to connect to the database
+        if not self.on_connect():
+            # Connection failed or was cancelled, don't show window
+            return
+            
+        current_time = time.time()
+        
+        # Show the window first
         self.window.show()
-        self.input.restore_last_mode()
-
+        
+        # Check if more than the configured time has passed since last activation
+        search_reset_timeout = config.get_search_reset_timeout()
+        if current_time - self.last_hotkey_time > search_reset_timeout:
+            # Reset to main search
+            self._handle_reset()
+            self.input.show_search()
+            # Clear the search input
+            self.input.set_search_text("")
+        else:
+            # Restore last mode as before
+            self.input.restore_last_mode()
+        
+        # Update last hotkey time
+        self.last_hotkey_time = current_time
+        
+        # Schedule an additional focus call after a short delay
+        self.root.after(100, self._ensure_focus)
+    
+    def _ensure_focus(self):
+        """Ensure the current input has focus"""
+        if self.input.current_mode == InputMode.SEARCH:
+            self.input.search_input.focus_force()
+        elif self.input.current_mode == InputMode.LIST:
+            self.input.list_input.focus_force()
+        elif self.input.current_mode == InputMode.ACTION:
+            self.input.action_input.focus_force()
 
     def hide(self):
         """Hide the window"""
@@ -139,7 +182,6 @@ class SearchWindow:
             self.actions = ActionButtons(self.window.get_main_frame(), lambda action: self._handle_action(action, entry), self.input.get_current_entry())
             self.actions.show()
         
-
         else:
             # Multiple entries - show list
             self.window.set_expanded(True)
@@ -166,6 +208,7 @@ class SearchWindow:
 
     def run(self):
         """Start the application"""
-        print("KeePass Search running. Press Alt+Shift+R to open search window.")
+        hotkey = config.get_search_hotkey()
+        print(f"KeePass Search running. Press {hotkey} to open search window.")
         print("Right-click the window for menu options.")
         self.root.mainloop()

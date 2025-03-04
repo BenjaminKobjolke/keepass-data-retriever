@@ -9,14 +9,14 @@ import win32api
 import win32con
 from ui.search_window import SearchWindow
 from ui.password_dialog import PasswordDialog
+from config import config
 
 class KeePassRetriever:
     def __init__(self):
         self.kp = None
         self.window = None
         self.last_activity_time = time.time()
-        self.idle_timeout = 1 * 60 * 60 # 1 hour 
-        #self.idle_timeout = 10 # 10 seconds
+        self.idle_timeout = config.get_database_idle_timeout()
         self.is_locked = False
 
     def get_database_path(self):
@@ -55,19 +55,20 @@ class KeePassRetriever:
             if not os.path.exists(db_path):
                 print(f"Error: Database file not found: {db_path}")
                 print("Use --database argument or set KEEPASS_DATABASE environment variable")
-                sys.exit(1)
+                return False
 
             password = self.get_password()
             if not password:  # User cancelled the dialog
                 print("Password input cancelled")
-                sys.exit(1)
+                return False
                 
             self.kp = PyKeePass(db_path, password)
             self.is_locked = False
             print(f"Successfully connected to KeePass database: {db_path}")
+            return True
         except Exception as e:
             print(f"Error opening KeePass database: {e}")
-            sys.exit(1)
+            return False
 
     def check_idle_time(self):
         """Check system idle time and lock if necessary"""
@@ -78,7 +79,9 @@ class KeePassRetriever:
             
             if idle_time >= self.idle_timeout and not self.is_locked:
                 print(f"System idle for {idle_time:.1f} seconds - locking database")
-                self.lock_database()
+                # Lock database, but don't exit if user cancels
+                self.is_locked = True
+                self.kp = None  # Clear the database connection
             
             # Schedule next check
             if self.window and self.window.root:
@@ -100,13 +103,14 @@ class KeePassRetriever:
                 self.kp = PyKeePass(db_path, password)
                 self.is_locked = False
                 print("Database unlocked successfully")
+                return True
             except Exception as e:
                 print(f"Error unlocking database: {e}")
                 # Try again if unlock failed
-                self.lock_database()
+                return self.lock_database()
         else:
-            print("Password input cancelled - exiting")
-            sys.exit(1)
+            print("Password input cancelled")
+            return False
 
     def handle_search(self, search_term):
         """Handle search request"""
@@ -161,23 +165,28 @@ class KeePassRetriever:
         except Exception as e:
             print(f"Error handling action {action}: {e}")
 
+    def lazy_connect_database(self):
+        """Connect to database if not already connected"""
+        if self.kp is None or self.is_locked:
+            return self.connect_database()
+        return True  # Already connected
+
     def run(self):
         """Run the application"""
         try:
-            # Connect to database
-            self.connect_database()
-
-            # Create and run window
+            # Create and run window without connecting to database immediately
             self.window = SearchWindow(
                 self.handle_search,
                 self.handle_action,
-                self.handle_select
+                self.handle_select,
+                self.lazy_connect_database  # New callback for lazy connection
             )
             
             # Start idle time checking
             self.check_idle_time()
             
-            print("KeePass Data Retriever running. Press Alt+Shift+F8 to open search window.")
+            hotkey = config.get_search_hotkey()
+            print(f"KeePass Data Retriever running. Press {hotkey} to open search window.")
             print("Right-click the window for menu options.")
             print(f"Database will lock after {self.idle_timeout} seconds of inactivity.")
             
