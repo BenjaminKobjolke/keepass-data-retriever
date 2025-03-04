@@ -11,6 +11,6 @@ class DarkEntry(tk.Entry):
             'highlightbackground': '#1e1e1e',  # Border color when not focused
             'highlightcolor': '#3d3d3d',  # Border color when focused
             'relief': 'flat',  # Flat appearance
-            'font': ('Segoe UI', 11)  # Larger font
+            'font': ('Segoe UI', 16)  # Increased font size
         })
         super().__init__(*args, **kwargs)

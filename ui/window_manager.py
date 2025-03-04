@@ -15,10 +15,10 @@ class WindowManager:
     BUTTON_FG = '#ffffff'  # White text for buttons
     TRANSPARENCY = 0.9
     
-    # Window sizes (increased by 30%)
-    WINDOW_WIDTH = 390  # 300 * 1.3
-    WINDOW_HEIGHT_NORMAL = 91  # 70 * 1.3
-    WINDOW_HEIGHT_EXPANDED = 520  # 400 * 1.3
+    # Window sizes (adjusted for wider input)
+    WINDOW_WIDTH = 420 
+    WINDOW_HEIGHT_NORMAL = 91
+    WINDOW_HEIGHT_EXPANDED = 520
 
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -36,7 +36,7 @@ class WindowManager:
         
         # Create main frame
         self.main_frame = ttk.Frame(self.root, style='Dark.TFrame')
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)  # Slightly larger padding
+        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=1)  # Reduced padding
         
         # Create system tray menu
         self._create_tray_menu()

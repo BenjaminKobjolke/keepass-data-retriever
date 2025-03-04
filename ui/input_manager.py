@@ -20,19 +20,19 @@ class InputManager:
         
         # Create input frame to position all inputs
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
-        self.frame.pack(padx=5, pady=5)
+        self.frame.pack(padx=2, pady=2)
         
         # Create search entry
-        self.search_input = entry_class(self.frame, width=30)
+        self.search_input = entry_class(self.frame, width=40)
         self.search_input.grid(row=0, column=0)
         
         # Create list selection input
-        self.list_input = entry_class(self.frame, width=30)
+        self.list_input = entry_class(self.frame, width=40)
         self.list_input.grid(row=0, column=0)
         self.list_input.grid_remove()  # Hide initially
         
         # Create action selection input
-        self.action_input = entry_class(self.frame, width=30)
+        self.action_input = entry_class(self.frame, width=40)
         self.action_input.grid(row=0, column=0)
         self.action_input.grid_remove()  # Hide initially
         
