@@ -114,10 +114,21 @@ class KeePassRetriever:
             return
             
         entries = []
+        # Split search term into individual words
+        search_terms = search_term.lower().split()
+        
         for entry in self.kp.entries:
-            if (entry.title and search_term.lower() in entry.title.lower()) or \
-               (entry.username and search_term.lower() in entry.username.lower()):
+            title = (entry.title or "").lower()
+            username = (entry.username or "").lower()
+            
+            # Replace hyphens with spaces to improve matching
+            searchable_title = title.replace('-', ' ')
+            searchable_username = username.replace('-', ' ')
+            
+            # Check if all search terms are found in either title or username
+            if all(term in searchable_title or term in searchable_username for term in search_terms):
                 entries.append(entry)
+                
         self.window.show_entries(entries)
 
     def handle_select(self, entry):
