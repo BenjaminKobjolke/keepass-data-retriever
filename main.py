@@ -20,17 +20,21 @@ class KeePassRetriever:
         self.is_locked = False
 
     def get_database_path(self):
-        """Get database path from command line, environment, or default"""
+        """Get database path from settings, command line, environment, or default"""
+        # First check settings.ini
+        db_path = config.get_database_path()
+        if db_path and os.path.exists(db_path):
+            return db_path
+            
+        # Check for --database argument (for backward compatibility)
         args = sys.argv[1:]
-        
-        # Check for --database argument
         for i, arg in enumerate(args):
             if arg == '--database' and i + 1 < len(args):
                 return args[i + 1]
         
-        # Check environment variable
-        if db_path := os.getenv('KEEPASS_DATABASE'):
-            return db_path
+        # Check environment variable (for backward compatibility)
+        if env_path := os.getenv('KEEPASS_DATABASE'):
+            return env_path
             
         # Use default
         return 'Database.kdbx'
@@ -54,7 +58,7 @@ class KeePassRetriever:
             db_path = self.get_database_path()
             if not os.path.exists(db_path):
                 print(f"Error: Database file not found: {db_path}")
-                print("Use --database argument or set KEEPASS_DATABASE environment variable")
+                print("Configure database_path in settings.ini, use --database argument, or set KEEPASS_DATABASE environment variable")
                 return False
 
             password = self.get_password()

@@ -20,7 +20,8 @@ class Config:
         # Set default values
         self.config['General'] = {
             'search_reset_timeout': '180',  # 3 minutes in seconds
-            'database_idle_timeout': '3600'  # 1 hour in seconds
+            'database_idle_timeout': '3600',  # 1 hour in seconds
+            'database_path': 'Database.kdbx'  # Default database path
         }
         self.config['Hotkeys'] = {
             'search_hotkey': 'alt + shift + F8'
@@ -56,6 +57,13 @@ class Config:
             return int(self.config.get('General', 'database_idle_timeout'))
         except (configparser.NoSectionError, configparser.NoOptionError, ValueError):
             return 3600  # Default: 1 hour
+    
+    def get_database_path(self) -> str:
+        """Get database path from config"""
+        try:
+            return self.config.get('General', 'database_path')
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return 'Database.kdbx'  # Default fallback
 
 # Create a singleton instance
 config = Config()
