@@ -11,12 +11,13 @@ class InputMode(Enum):
 class InputManager:
     def __init__(self, parent: ttk.Frame, on_search: Callable, on_select: Callable, 
                  on_action: Callable, on_escape: Callable, on_reset: Callable, 
-                 entry_class: Type[ttk.Entry]):
+                 entry_class: Type[ttk.Entry], on_enter_action: Callable = None):
         self.on_search = on_search
         self.on_select = on_select
         self.on_action = on_action
         self.on_escape = on_escape
         self.on_reset = on_reset
+        self.on_enter_action = on_enter_action
         
         # Create input frame to position all inputs
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
@@ -40,6 +41,7 @@ class InputManager:
         self.search_input.bind('<Return>', self._handle_search)
         self.list_input.bind('<Key>', self._handle_list_key)
         self.action_input.bind('<Key>', self._handle_action_key)
+        self.action_input.bind('<Return>', self._handle_action_return)
         
         # Bind ESC key to all inputs
         self.search_input.bind('<Escape>', self._handle_escape)
@@ -63,7 +65,13 @@ class InputManager:
 
     def _handle_list_key(self, event):
         """Handle key press in list selection input"""
-        print(f"List key pressed: {event.char}")
+        print(f"List key pressed: {event.char}, keysym: {event.keysym}")
+        
+        # Handle Backspace key to go back to main GUI
+        if event.keysym == 'BackSpace':
+            self.reset_to_search()  # Reset state and go back to search
+            return "break"
+            
         if event.char == '0':
             self.reset_to_search()  # Reset state and go back to search
         elif event.char.isdigit():
@@ -79,7 +87,13 @@ class InputManager:
 
     def _handle_action_key(self, event):
         """Handle key press in action selection input"""
-        print(f"Action key pressed: {event.char}")
+        print(f"Action key pressed: {event.char}, keysym: {event.keysym}")
+        
+        # Handle Backspace key to go back to main GUI
+        if event.keysym == 'BackSpace':
+            self.reset_to_search()  # Reset state and go back to search
+            return "break"
+            
         if event.char == '0':
             self.reset_to_search()  # Reset state and go back to search
         elif event.char.isdigit():
@@ -161,6 +175,14 @@ class InputManager:
         self.search_input.delete(0, tk.END)
         self.search_input.insert(0, text)
 
+    def _handle_action_return(self, event):
+        """Handle Return key in action input"""
+        print("Action Return key pressed")
+        if self.current_entry and self.on_enter_action:
+            self.on_enter_action(self.current_entry)
+            return "break"
+        return False
+        
     def handle_return(self):
         """Handle Return key to reactivate search"""
         if self.search_input != self.search_input.focus_get():

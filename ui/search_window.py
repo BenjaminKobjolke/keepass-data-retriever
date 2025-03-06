@@ -38,7 +38,8 @@ class SearchWindow:
             self._handle_action,
             self.hide,
             self._handle_reset,
-            DarkEntry
+            DarkEntry,
+            self._handle_enter_action
         )
         self.results = ResultsView(self.window.get_main_frame())
         self.actions = None
@@ -111,7 +112,38 @@ class SearchWindow:
 
     def _handle_return(self, event):
         """Handle Return key"""
+        # If we're in action mode, perform the auto-fill sequence
+        if self.input.current_mode == InputMode.ACTION and self.input.current_entry:
+            self._handle_enter_action(self.input.current_entry)
+            return "break"
         return self.input.handle_return()
+        
+    def _handle_enter_action(self, entry):
+        """Handle Enter key in action mode - auto-fill username and password"""
+        # Hide the window first
+        self.hide()
+        
+        # Schedule the typing operation with a delay
+        self.root.after(1000, self._type_credentials, entry.username, entry.password)
+        
+    def _type_credentials(self, username: str, password: str):
+        """Type username, tab, password, enter sequence"""
+        # Type username
+        self._type_text(username)
+        
+        # Press Tab
+        time.sleep(0.1)
+        self.keyboard.press(Key.tab)
+        self.keyboard.release(Key.tab)
+        time.sleep(0.1)
+        
+        # Type password
+        self._type_text(password)
+        
+        # Press Enter
+        time.sleep(0.1)
+        self.keyboard.press(Key.enter)
+        self.keyboard.release(Key.enter)
 
     def show_window(self):
         """Show the window"""
