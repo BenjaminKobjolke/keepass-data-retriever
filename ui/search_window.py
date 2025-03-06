@@ -39,7 +39,9 @@ class SearchWindow:
             self.hide,
             self._handle_reset,
             DarkEntry,
-            self._handle_enter_action
+            self._handle_enter_action,
+            self._handle_highlight_change,
+            self._handle_action_highlight_change
         )
         self.results = ResultsView(self.window.get_main_frame())
         self.actions = None
@@ -82,6 +84,10 @@ class SearchWindow:
             if base_action == 'password':
                 text_to_type = entry.password
             self.root.after(1000, self._type_text, text_to_type)
+        elif action == 'auto_type':
+            # Auto type username and password
+            self.hide()
+            self.root.after(1000, self._type_credentials, entry.username, entry.password)
         else:
             # Normal copy/open actions
             self.on_action(action, entry)  # Pass the entry along
@@ -112,10 +118,16 @@ class SearchWindow:
 
     def _handle_return(self, event):
         """Handle Return key"""
-        # If we're in action mode, perform the auto-fill sequence
-        if self.input.current_mode == InputMode.ACTION and self.input.current_entry:
-            self._handle_enter_action(self.input.current_entry)
-            return "break"
+        # If we're in action mode, perform the action for the highlighted button
+        if self.input.current_mode == InputMode.ACTION and self.input.current_entry and self.actions:
+            # Get the currently highlighted action
+            current_index = self.actions.get_current_highlight()
+            if current_index >= 0 and current_index < self.actions.get_action_count():
+                # Get the action name from the button
+                action = self.actions.buttons[current_index]["action"]
+                # Handle the action
+                self._handle_action(action, self.input.current_entry)
+                return "break"
         return self.input.handle_return()
         
     def _handle_enter_action(self, entry):
@@ -190,6 +202,35 @@ class SearchWindow:
             #self.actions.hide()  # Just hide the buttons, don't destroy them
         self.window.hide()
 
+    def _handle_highlight_change(self, direction: str):
+        """Handle highlight change in results view"""
+        current_index = self.results.get_current_highlight()
+        entry_count = self.results.get_entry_count()
+        
+        if entry_count == 0:
+            return
+            
+        # Calculate new index based on direction
+        if direction == 'up':
+            new_index = max(0, current_index - 1) if current_index >= 0 else entry_count - 1
+        elif direction == 'down':
+            new_index = (current_index + 1) % entry_count if current_index >= 0 else 0
+        else:
+            return
+            
+        # Highlight the new entry and update current_entry
+        entry = self.results.highlight_entry(new_index)
+        if entry:
+            self.input.current_entry = entry
+            
+    def _handle_action_highlight_change(self, direction: str):
+        """Handle highlight change in action buttons"""
+        if not self.actions:
+            return
+            
+        # Use the ActionButtons' highlight change handler
+        self.actions.handle_highlight_change(direction)
+            
     def show_entries(self, entries: List[Any]):
         """Show search results"""
         # Clear previous results
@@ -220,6 +261,12 @@ class SearchWindow:
             self.results.show_entries(entries)
             self.status.show_search_results(entries)
             self.input.show_list(entries)
+            
+            # Highlight the first entry by default
+            if entries:
+                entry = self.results.highlight_entry(0)
+                if entry:
+                    self.input.current_entry = entry
 
     def show_selected_entry(self, entry: Any):
         """Show selected entry"""

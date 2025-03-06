@@ -11,13 +11,16 @@ class InputMode(Enum):
 class InputManager:
     def __init__(self, parent: ttk.Frame, on_search: Callable, on_select: Callable, 
                  on_action: Callable, on_escape: Callable, on_reset: Callable, 
-                 entry_class: Type[ttk.Entry], on_enter_action: Callable = None):
+                 entry_class: Type[ttk.Entry], on_enter_action: Callable = None,
+                 on_highlight_change: Callable = None, on_action_highlight_change: Callable = None):
         self.on_search = on_search
         self.on_select = on_select
         self.on_action = on_action
         self.on_escape = on_escape
         self.on_reset = on_reset
         self.on_enter_action = on_enter_action
+        self.on_highlight_change = on_highlight_change
+        self.on_action_highlight_change = on_action_highlight_change
         
         # Create input frame to position all inputs
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
@@ -71,6 +74,19 @@ class InputManager:
         if event.keysym == 'BackSpace':
             self.reset_to_search()  # Reset state and go back to search
             return "break"
+        
+        # Handle arrow keys for navigation
+        if event.keysym == 'Up':
+            self._navigate_previous()
+            return "break"
+        elif event.keysym == 'Down':
+            self._navigate_next()
+            return "break"
+        elif event.keysym == 'Return':
+            # Select the currently highlighted entry if any
+            if self.current_entry:
+                self.on_select(self.current_entry)
+            return "break"
             
         if event.char == '0':
             self.reset_to_search()  # Reset state and go back to search
@@ -84,6 +100,16 @@ class InputManager:
         # Clear the input
         self.list_input.delete(0, tk.END)
         return "break"
+        
+    def _navigate_previous(self):
+        """Navigate to the previous entry in the list"""
+        if self.on_highlight_change and self.entries:
+            self.on_highlight_change('up')
+            
+    def _navigate_next(self):
+        """Navigate to the next entry in the list"""
+        if self.on_highlight_change and self.entries:
+            self.on_highlight_change('down')
 
     def _handle_action_key(self, event):
         """Handle key press in action selection input"""
@@ -94,27 +120,48 @@ class InputManager:
             self.reset_to_search()  # Reset state and go back to search
             return "break"
             
+        # Handle arrow keys for navigation
+        if event.keysym == 'Up':
+            self._navigate_action_previous()
+            return "break"
+        elif event.keysym == 'Down':
+            self._navigate_action_next()
+            return "break"
+        # Let the Return key event propagate to SearchWindow._handle_return
+            
         if event.char == '0':
             self.reset_to_search()  # Reset state and go back to search
         elif event.char.isdigit():
             number = int(event.char)
-            if 1 <= number <= 6:  # Now handling 6 actions
+            if 1 <= number <= 7:  # Now handling 7 actions
                 actions = [
-                    'username',      # 1: Copy Username
-                    'password',      # 2: Copy Password
-                    'type_username', # 3: Paste Username
-                    'type_password',  # 4: Paste Password
-                    'url',          # 5: Copy URL
-                    'open_url',      # 6: Open URL
-                                        
+                    'auto_type',     # 1: Auto Type
+                    'username',      # 2: Copy Username
+                    'password',      # 3: Copy Password
+                    'type_username', # 4: Type Username
+                    'type_password', # 5: Type Password
+                    'url',           # 6: Copy URL
+                    'open_url',      # 7: Open URL
                 ]
-                self.on_action(actions[number - 1], self.current_entry)
-                # Hide window after any action
-                self.on_escape()
+                # Check if the action exists (URL actions might not be available)
+                if number <= len(actions):
+                    self.on_action(actions[number - 1], self.current_entry)
+                    # Hide window after any action
+                    self.on_escape()
         
         # Clear the input
         self.action_input.delete(0, tk.END)
         return "break"
+        
+    def _navigate_action_previous(self):
+        """Navigate to the previous action"""
+        if self.on_action_highlight_change and self.current_entry:
+            self.on_action_highlight_change('up')
+            
+    def _navigate_action_next(self):
+        """Navigate to the next action"""
+        if self.on_action_highlight_change and self.current_entry:
+            self.on_action_highlight_change('down')
 
     def reset_to_search(self):
         """Reset state and return to search input"""
@@ -154,10 +201,25 @@ class InputManager:
         """Show action selection input"""
         self.search_input.grid_remove()
         self.list_input.grid_remove()
+        
+        # Make the action input minimal but still visible
         self.action_input.grid()
-        self.action_input.focus_force()
+        
+        # Make it blend in with the background - use a fixed dark color
+        # that matches the application's dark theme
+        self.action_input.configure(
+            background='#1e1e1e',  # Dark background color
+            highlightthickness=0,  # No border
+            width=1  # Very small width
+        )
+        
+        # Position it at the bottom with minimal space
+        self.action_input.grid(pady=(0, 1))
+        
+        self.action_input.focus_force()  # Give it focus for keyboard input
+        
         self.current_mode = InputMode.ACTION
-        print("Moving focus to action input")
+        print("Moving focus to action input (minimal)")
 
     def restore_last_mode(self):
         """Restore the last active input mode"""
@@ -178,9 +240,8 @@ class InputManager:
     def _handle_action_return(self, event):
         """Handle Return key in action input"""
         print("Action Return key pressed")
-        if self.current_entry and self.on_enter_action:
-            self.on_enter_action(self.current_entry)
-            return "break"
+        # Let the SearchWindow._handle_return method handle this
+        # by not returning "break" here
         return False
         
     def handle_return(self):
