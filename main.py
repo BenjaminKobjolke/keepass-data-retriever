@@ -2,6 +2,7 @@
 
 import sys
 import os
+import uuid
 from pykeepass import PyKeePass
 import pyperclip
 import time
@@ -168,6 +169,33 @@ class KeePassRetriever:
                 webbrowser.open(entry.url)
         except Exception as e:
             print(f"Error handling action {action}: {e}")
+            
+    def find_entries_by_uuids(self, uuids):
+        """Find entries by their UUIDs"""
+        if self.is_locked or not self.kp:
+            return []
+            
+        entries = []
+        for uuid_str in uuids:
+            try:
+                # Convert string UUID to UUID object
+                uuid_obj = uuid.UUID(uuid_str)
+                
+                # Use PyKeePass's find_entries method with the uuid parameter
+                entry = self.kp.find_entries(uuid=uuid_obj, first=True)
+                if entry:
+                    entries.append(entry)
+            except Exception as e:
+                print(f"Error finding entry with UUID {uuid_str}: {e}")
+        
+        return entries
+        
+    def get_recent_entries(self, entry_ids):
+        """Get entries by their UUIDs"""
+        if self.is_locked:
+            return []
+        
+        return self.find_entries_by_uuids(entry_ids)
 
     def lazy_connect_database(self):
         """Connect to database if not already connected"""
@@ -183,7 +211,8 @@ class KeePassRetriever:
                 self.handle_search,
                 self.handle_action,
                 self.handle_select,
-                self.lazy_connect_database  # New callback for lazy connection
+                self.lazy_connect_database,  # Callback for lazy connection
+                self.get_recent_entries  # Callback for getting recent entries
             )
             
             # Start idle time checking
