@@ -22,7 +22,8 @@ class Config:
             'search_reset_timeout': '180',  # 3 minutes in seconds
             'database_idle_timeout': '3600',  # 1 hour in seconds
             'database_path': 'Database.kdbx',  # Default database path
-            'debug_mode': 'false'  # Debug mode disabled by default
+            'debug_mode': 'false',  # Debug mode disabled by default
+            'window_position': 'mouse'  # Window position mode: 'mouse' or 'center'
         }
         self.config['Hotkeys'] = {
             'search_hotkey': 'alt + shift + F8'
@@ -73,6 +74,16 @@ class Config:
             return debug_mode in ('true', 'yes', '1', 'on')
         except (configparser.NoSectionError, configparser.NoOptionError):
             return False  # Default: debug mode disabled
+            
+    def get_window_position_mode(self) -> str:
+        """Get window position mode from config"""
+        try:
+            mode = self.config.get('General', 'window_position').lower()
+            if mode in ('mouse', 'center'):
+                return mode
+            return 'mouse'  # Default if invalid value
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return 'mouse'  # Default: position at mouse cursor
 
 # Create a singleton instance
 config = Config()

@@ -4,6 +4,12 @@ from typing import Optional, Callable
 import win32gui
 import win32con
 import time
+import sys
+import os
+
+# Add parent directory to path to import config
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import config
 
 class WindowManager:
     # Dark theme colors
@@ -101,6 +107,18 @@ class WindowManager:
         self.root.bind('<Button-3>', lambda e: self.menu.post(e.x_root, e.y_root))
 
     def _position_window(self):
+        """Position window based on settings"""
+        # Get window position mode from config
+        position_mode = config.get_window_position_mode()
+        
+        if position_mode == 'center':
+            # Center in active window
+            self._position_window_center()
+        else:
+            # Default: position at mouse cursor
+            self._position_window_mouse()
+    
+    def _position_window_mouse(self):
         """Position window near mouse cursor"""
         mouse_x = self.root.winfo_pointerx()
         mouse_y = self.root.winfo_pointery()
@@ -112,6 +130,35 @@ class WindowManager:
             self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT_EXPANDED}+{mouse_x + offset_x}+{mouse_y + offset_y}")
         else:
             self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT_NORMAL}+{mouse_x + offset_x}+{mouse_y + offset_y}")
+    
+    def _position_window_center(self):
+        """Position window in center of active window"""
+        try:
+            # Get active window handle
+            active_hwnd = win32gui.GetForegroundWindow()
+            
+            # Get active window rect
+            left, top, right, bottom = win32gui.GetWindowRect(active_hwnd)
+            active_width = right - left
+            active_height = bottom - top
+            
+            # Calculate center position
+            window_width = self.WINDOW_WIDTH
+            window_height = self.WINDOW_HEIGHT_EXPANDED if self.window_expanded else self.WINDOW_HEIGHT_NORMAL
+            
+            center_x = left + (active_width - window_width) // 2
+            center_y = top + (active_height - window_height) // 2
+            
+            # Ensure window is visible on screen
+            center_x = max(0, center_x)
+            center_y = max(0, center_y)
+            
+            # Set window position
+            self.root.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
+        except Exception as e:
+            # Fallback to mouse position if error
+            print(f"Error positioning window in center: {e}")
+            self._position_window_mouse()
 
     def _force_focus(self):
         """Force focus to our window"""
