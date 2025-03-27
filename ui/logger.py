@@ -58,3 +58,11 @@ class Logger:
     def is_debug_enabled(self) -> bool:
         """Check if debug mode is enabled"""
         return self.debug_enabled
+        
+    def set_debug(self, enabled: bool):
+        """Set debug mode"""
+        self.debug_enabled = enabled
+        if enabled:
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.INFO)

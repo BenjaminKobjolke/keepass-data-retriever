@@ -50,20 +50,54 @@ class StateHandler:
         # Check for recent entries
         try:
             from .window_relations_manager import WindowRelationsManager
+            
+            # Get window relations manager from data
             window_relations_manager = data.get('window_relations_manager')
+            logger.debug(f"Window relations manager from data: {window_relations_manager}")
+            
             if window_relations_manager:
+                # Get current window title
+                current_window_title = window_relations_manager.current_window_title
+                logger.debug(f"Current window title: {current_window_title}")
+                
+                # Get recent entry IDs for current window
                 recent_entry_ids = window_relations_manager.get_recent_entries_for_current_window()
+                logger.debug(f"Recent entry IDs for current window: {recent_entry_ids}")
+                
                 if recent_entry_ids:
                     # Get entries from KeePass database
+                    logger.debug(f"Getting entries from KeePass database for IDs: {recent_entry_ids}")
                     recent_entries = self.on_get_recent_entries(recent_entry_ids)
+                    
                     if recent_entries:
+                        logger.debug(f"Found {len(recent_entries)} recent entries")
+                        # Log entry titles for debugging
+                        for i, entry in enumerate(recent_entries):
+                            logger.debug(f"  Entry {i+1}: {entry.title} (UUID: {entry.uuid})")
+                        
                         # Show recent entries
                         self.show_recent_entries(recent_entries)
                         return
+                    else:
+                        logger.debug("No entries returned from on_get_recent_entries")
+                        logger.debug(f"Entry IDs that were searched for: {recent_entry_ids}")
+                else:
+                    logger.debug("No recent entry IDs found for current window")
+            else:
+                logger.debug("No window relations manager in data")
         except Exception as e:
             logger.error(f"Error getting recent entries: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
         
         # No recent entries, just show search
+        logger.debug("No recent entries to show, showing search input")
+        
+        # Make sure we don't show entries from previous windows
+        # This is handled in SearchWindow._handle_reset, but we'll also do it here for safety
+        self.reset_callback()
+        
+        # Show search input
         self.show_search_callback()
         
         # Clear the search input

@@ -113,10 +113,12 @@ class InputManager:
         if self.entries and self.current_entry:
             logger.debug("Selecting current entry")
             self.on_select(self.current_entry)
-        else:
+        elif search_term.strip():  # Only perform search if search term is not empty
             # Otherwise perform a search
             logger.debug(f"Performing search with term: '{search_term}'")
             self.on_search(search_term)
+        else:
+            logger.debug("Empty search term, ignoring Enter key")
         return "break"
         
     def _handle_search_backspace(self, event):
@@ -267,8 +269,8 @@ class InputManager:
             self.on_action_highlight_change('down')
 
     def reset_to_initial_view(self):
-        """Reset to initial view without clearing entries"""
-        logger.debug(f"Resetting to initial view with {len(self.entries)} entries")
+        """Reset to initial view and clear entries"""
+        logger.debug(f"Resetting to initial view, clearing {len(self.entries) if self.entries else 0} entries")
         
         # Clear the entries
         self.entries = []
@@ -281,7 +283,8 @@ class InputManager:
         
         # If we have a state manager, transition to INITIAL state
         if self.state_manager:
-            self.state_manager.transition_to(AppState.INITIAL)
+            # Add a flag to indicate we're clearing entries
+            self.state_manager.transition_to(AppState.INITIAL, {'clear_entries': True})
         
         # If we have a callback to show the initial view, call it
         if self.on_show_initial_view:

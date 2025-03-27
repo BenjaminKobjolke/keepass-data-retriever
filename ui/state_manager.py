@@ -7,7 +7,8 @@ logger = Logger.get_instance()
 
 class AppState(Enum):
     """Enum representing the different states of the application"""
-    INITIAL = auto()      # Initial state, search input with no results
+    STARTING = auto()     # Initial application startup state
+    INITIAL = auto()      # Initial window state, search input with no results
     SEARCH = auto()       # Active search input with focus
     RESULTS_LIST = auto() # Displaying search results as a list
     ENTRY_ACTIONS = auto() # Showing actions for a selected entry
@@ -25,7 +26,7 @@ class StateManager:
     """Manages the application state and notifies listeners of changes"""
     
     def __init__(self):
-        self._current_state: AppState = AppState.INITIAL
+        self._current_state: AppState = AppState.STARTING
         self._previous_state: Optional[AppState] = None
         self._state_data: Dict[str, Any] = {}
         self._previous_data: Dict[str, Any] = {}  # Store previous state data

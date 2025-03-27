@@ -149,6 +149,17 @@ class SearchWindow:
         self.results.clear()
         self.entry_actions_handler.cleanup()
 
+        # Check if we're in INITIAL state and handling a new window
+        current_state = self.state_manager.get_current_state()
+        if current_state == AppState.INITIAL:
+            # We're in INITIAL state, so we should clear any entries from previous windows
+            # This prevents entries from a previous window being shown for the current window
+            logger.debug("In INITIAL state, clearing entries from previous windows")
+            self.input.entries = []
+            self.window.set_expanded(False)
+            self.status.set_text("")
+            return
+
         # Check if we have entries to show
         if self.input.entries and len(self.input.entries) > 0:
             logger.debug(f"Showing {len(self.input.entries)} entries")
@@ -175,8 +186,10 @@ class SearchWindow:
     def show_window(self):
         """Show the window"""
         # Log active window title before showing the window
+        current_window_title = None
         try:
-            self.window_relations_manager.log_active_window()
+            current_window_title = self.window_relations_manager.log_active_window()
+            logger.debug(f"Active window title: {current_window_title}")
         except Exception as e:
             logger.error(f"Error logging active window: {e}")
             
@@ -190,16 +203,48 @@ class SearchWindow:
         # Show the window first
         self.window.show()
         
-        # Check if more than the configured time has passed since last activation
-        search_reset_timeout = config.get_search_reset_timeout()
-        if current_time - self.last_hotkey_time > search_reset_timeout:
+        # Get current state
+        current_state = self.state_manager.get_current_state()
+        logger.debug(f"Current state before processing: {current_state}")
+        
+        # Check if we're in the STARTING state (first time showing the window)
+        if current_state == AppState.STARTING:
+            logger.debug("First time showing window, transitioning to INITIAL state")
+            # Add window_relations_manager to data for state handler
+            data = {'window_relations_manager': self.window_relations_manager}
             # Transition to INITIAL state
-            self.state_manager.transition_to(AppState.INITIAL)
+            self.state_manager.transition_to(AppState.INITIAL, data)
+        # Check if more than the configured time has passed since last activation
+        elif current_time - self.last_hotkey_time > config.get_search_reset_timeout():
+            logger.debug("Search reset timeout exceeded, transitioning to INITIAL state")
+            # Add window_relations_manager to data for state handler
+            data = {'window_relations_manager': self.window_relations_manager}
+            # Transition to INITIAL state
+            self.state_manager.transition_to(AppState.INITIAL, data)
+        # Check if we're coming from HIDDEN state
+        elif current_state == AppState.HIDDEN:
+            # Get previous state
+            previous_state = self.state_manager.get_previous_state()
+            logger.debug(f"Coming from HIDDEN state, previous state was: {previous_state}")
+            
+            # If previous state was INITIAL, transition back to INITIAL with window_relations_manager
+            if previous_state == AppState.INITIAL:
+                logger.debug("Previous state was INITIAL, transitioning back to INITIAL with window_relations_manager")
+                data = {'window_relations_manager': self.window_relations_manager}
+                self.state_manager.transition_to(AppState.INITIAL, data)
+            else:
+                # Try to restore previous state
+                logger.debug("Attempting to restore previous state")
+                if not self.state_handler.restore_previous_state():
+                    # Default to restoring the last input mode
+                    logger.debug("No previous state to restore, using default restore_last_mode")
+                    self.input.restore_last_mode()
         else:
             # Try to restore previous state
+            logger.debug("Attempting to restore previous state")
             if not self.state_handler.restore_previous_state():
                 # Default to restoring the last input mode
-                logger.debug("Using default restore_last_mode")
+                logger.debug("No previous state to restore, using default restore_last_mode")
                 self.input.restore_last_mode()
         
         # Update last hotkey time

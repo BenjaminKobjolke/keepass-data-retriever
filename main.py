@@ -186,30 +186,81 @@ class KeePassRetriever:
             
     def find_entries_by_uuids(self, uuids):
         """Find entries by their UUIDs"""
+        from ui.logger import Logger
+        logger = Logger.get_instance()
+        
         if self.is_locked or not self.kp:
+            logger.debug("Cannot find entries: database is locked or not connected")
             return []
             
+        logger.debug(f"Finding entries for {len(uuids)} UUIDs: {uuids}")
+        
+        # Check if we have any entries at all
+        if not self.kp.entries:
+            logger.debug("No entries in the database")
+            return []
+            
+        # Log total number of entries in database for debugging
+        logger.debug(f"Total entries in database: {len(self.kp.entries)}")
+        
         entries = []
         for uuid_str in uuids:
             try:
                 # Convert string UUID to UUID object
                 uuid_obj = uuid.UUID(uuid_str)
+                logger.debug(f"Looking up entry with UUID: {uuid_str}")
                 
                 # Use PyKeePass's find_entries method with the uuid parameter
                 entry = self.kp.find_entries(uuid=uuid_obj, first=True)
                 if entry:
+                    logger.debug(f"Found entry: {entry.title} (UUID: {entry.uuid})")
                     entries.append(entry)
+                else:
+                    logger.debug(f"No entry found for UUID: {uuid_str}")
+                    
+                    # Try to find the entry by iterating through all entries
+                    # This is a fallback in case the find_entries method doesn't work
+                    found = False
+                    for e in self.kp.entries:
+                        if str(e.uuid) == uuid_str:
+                            logger.debug(f"Found entry by manual search: {e.title} (UUID: {e.uuid})")
+                            entries.append(e)
+                            found = True
+                            break
+                    
+                    if not found:
+                        logger.debug(f"Entry not found even with manual search: {uuid_str}")
             except Exception as e:
-                print(f"Error finding entry with UUID {uuid_str}: {e}")
+                logger.error(f"Error finding entry with UUID {uuid_str}: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
         
+        logger.debug(f"Found {len(entries)} entries total")
         return entries
         
     def get_recent_entries(self, entry_ids):
         """Get entries by their UUIDs"""
+        from ui.logger import Logger
+        logger = Logger.get_instance()
+        
+        logger.debug(f"Getting recent entries for IDs: {entry_ids}")
+        
         if self.is_locked:
+            logger.debug("Database is locked, cannot get entries")
             return []
         
-        return self.find_entries_by_uuids(entry_ids)
+        if not self.kp:
+            logger.debug("No database connection, cannot get entries")
+            return []
+            
+        entries = self.find_entries_by_uuids(entry_ids)
+        logger.debug(f"Found {len(entries)} entries")
+        
+        # Log entry titles for debugging
+        for entry in entries:
+            logger.debug(f"Found entry: {entry.title}")
+            
+        return entries
 
     def lazy_connect_database(self):
         """Connect to database if not already connected"""
