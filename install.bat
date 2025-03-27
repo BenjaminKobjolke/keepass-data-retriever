@@ -1,4 +1,4 @@
-pip -m venv venv
+python -m venv venv
 cd venv
 cd Scripts
 call activate
