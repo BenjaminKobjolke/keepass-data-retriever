@@ -1,7 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Callable, Optional, Type
+from typing import Callable, Optional, Type, Dict, Any
 from enum import Enum, auto
+from .state_manager import StateManager, AppState
+from .logger import Logger
+
+# Get logger instance
+logger = Logger.get_instance()
 
 class InputMode(Enum):
     SEARCH = auto()
@@ -13,7 +18,8 @@ class InputManager:
                  on_action: Callable, on_escape: Callable, on_reset: Callable, 
                  entry_class: Type[ttk.Entry], on_enter_action: Callable = None,
                  on_highlight_change: Callable = None, on_action_highlight_change: Callable = None,
-                 on_show_initial_view: Callable = None):
+                 on_show_initial_view: Callable = None, state_manager: StateManager = None,
+                 on_exit: Callable = None):
         self.on_search = on_search
         self.on_select = on_select
         self.on_action = on_action
@@ -23,6 +29,8 @@ class InputManager:
         self.on_highlight_change = on_highlight_change
         self.on_action_highlight_change = on_action_highlight_change
         self.on_show_initial_view = on_show_initial_view
+        self.state_manager = state_manager
+        self.on_exit = on_exit  # Callback for exiting the application
         
         # Create input frame to position all inputs
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
@@ -60,6 +68,30 @@ class InputManager:
         self.entries = []  # Store entries for list selection
         self.current_entry = None  # Store single entry for action mode
         self.current_mode = InputMode.SEARCH
+        
+        # Register as state listener if state manager is provided
+        if self.state_manager:
+            self.state_manager.register_listener(self)
+    
+    def on_state_changed(self, state: AppState, data: Dict[str, Any]) -> None:
+        """Handle state changes"""
+        logger.debug(f"InputManager: State changed to {state}")
+        
+        if state == AppState.INITIAL or state == AppState.SEARCH:
+            self.show_search()
+            if state == AppState.SEARCH:
+                search_term = data.get('search_term', '')
+                if search_term:
+                    self.set_search_text(search_term)
+        elif state == AppState.RESULTS_LIST:
+            # Don't store entries here - let SearchWindow handle it
+            # This prevents duplicate entries
+            pass
+        elif state == AppState.ENTRY_ACTIONS:
+            entry = data.get('entry')
+            if entry:
+                self.current_entry = entry
+                self.show_actions()
 
     def _handle_escape(self, event):
         """Handle ESC key"""
@@ -68,15 +100,22 @@ class InputManager:
 
     def _handle_search(self, event):
         """Handle search entry Return key"""
-        print(f"_handle_search called, entries: {len(self.entries) if self.entries else 0}, current_entry: {self.current_entry is not None}")
+        logger.debug(f"_handle_search called, entries: {len(self.entries) if self.entries else 0}, current_entry: {self.current_entry is not None}")
+        
+        # Check for exit command
+        search_term = self.search_input.get()
+        if search_term == "/exit" and self.on_exit:
+            logger.info("Exit command detected")
+            self.on_exit()
+            return "break"
+            
         # If we have entries and a current entry is selected, select it
         if self.entries and self.current_entry:
-            print("Selecting current entry")
+            logger.debug("Selecting current entry")
             self.on_select(self.current_entry)
         else:
             # Otherwise perform a search
-            search_term = self.search_input.get()
-            print(f"Performing search with term: '{search_term}'")
+            logger.debug(f"Performing search with term: '{search_term}'")
             self.on_search(search_term)
         return "break"
         
@@ -84,7 +123,7 @@ class InputManager:
         """Handle backspace key in search input"""
         # Only handle backspace if the search input is empty and we have entries
         if not self.search_input.get() and self.entries:
-            print("Backspace pressed in search mode with empty input, resetting to initial view")
+            logger.debug("Backspace pressed in search mode with empty input, resetting to initial view")
             self.reset_to_initial_view()  # Reset to initial view
             return "break"
         # Otherwise, let the default backspace behavior happen
@@ -112,8 +151,14 @@ class InputManager:
 
     def _handle_list_key(self, event):
         """Handle key press in list selection input"""
-        print(f"List key pressed: {event.char}, keysym: {event.keysym}")
+        logger.debug(f"List key pressed: {event.char}, keysym: {event.keysym}")
         
+        # Check for exit command
+        if self.list_input.get() == "/exit" and self.on_exit:
+            logger.info("Exit command detected")
+            self.on_exit()
+            return "break"
+            
         # Handle Backspace key to go back to main GUI
         if event.keysym == 'BackSpace':
             self.reset_to_search()  # Reset state and go back to search
@@ -157,20 +202,25 @@ class InputManager:
 
     def _handle_action_key(self, event):
         """Handle key press in action selection input"""
-        print(f"Action key pressed: {event.char}, keysym: {event.keysym}")
+        logger.debug(f"Action key pressed: {event.char}, keysym: {event.keysym}")
         
+        # Check for exit command
+        if self.action_input.get() == "/exit" and self.on_exit:
+            logger.info("Exit command detected")
+            self.on_exit()
+            return "break"
+            
         # Handle Backspace key to go back to main GUI
         if event.keysym == 'BackSpace':
-            print("Backspace pressed in action mode, returning to search")
+            logger.debug("Backspace pressed in action mode, returning to search")
             # Store entries before resetting
             stored_entries = self.entries.copy() if self.entries else []
-            print(f"Stored {len(stored_entries)} entries")
+            logger.debug(f"Stored {len(stored_entries)} entries")
             
             self.reset_to_search()  # Reset state and go back to search
             
             # Restore entries after reset
-            self.entries = stored_entries
-            print(f"Restored {len(self.entries)} entries")
+            logger.debug(f"Restored {len(self.entries)} entries")
             return "break"
             
         # Handle arrow keys for navigation
@@ -218,7 +268,7 @@ class InputManager:
 
     def reset_to_initial_view(self):
         """Reset to initial view without clearing entries"""
-        print(f"Resetting to initial view with {len(self.entries)} entries")
+        logger.debug(f"Resetting to initial view with {len(self.entries)} entries")
         
         # Clear the entries
         self.entries = []
@@ -228,6 +278,10 @@ class InputManager:
         
         # Ensure we're in search mode
         self.show_search()
+        
+        # If we have a state manager, transition to INITIAL state
+        if self.state_manager:
+            self.state_manager.transition_to(AppState.INITIAL)
         
         # If we have a callback to show the initial view, call it
         if self.on_show_initial_view:
@@ -253,26 +307,30 @@ class InputManager:
         # Restore entries
         self.entries = stored_entries
         
+        # If we have a state manager, transition to SEARCH state
+        if self.state_manager:
+            self.state_manager.transition_to(AppState.SEARCH, {'entries': self.entries})
+        
         # If we have entries, tell the SearchWindow to show them
         if self.entries and len(self.entries) > 0:
-            print(f"Restoring {len(self.entries)} entries after reset")
+            logger.debug(f"Restoring {len(self.entries)} entries after reset")
             # We need to call on_reset again to show the entries
             self.on_reset()
 
     def show_search(self):
         """Show search input"""
-        print(f"show_search called from {__import__('traceback').extract_stack()[-2][2]}")
+        logger.debug(f"show_search called from {__import__('traceback').extract_stack()[-2][2]}")
         self.list_input.grid_remove()
         self.action_input.grid_remove()
         self.search_input.grid()
         self.search_input.focus_force()
         self.search_input.select_range(0, tk.END)
         self.current_mode = InputMode.SEARCH
-        print(f"Input mode set to {self.current_mode}")
+        logger.debug(f"Input mode set to {self.current_mode}")
 
     def show_list(self, entries):
         """Show list selection input"""
-        print(f"show_list called from {__import__('traceback').extract_stack()[-2][2]} with {len(entries)} entries")
+        logger.debug(f"show_list called from {__import__('traceback').extract_stack()[-2][2]} with {len(entries)} entries")
         self.entries = entries
         
         # If only one entry, go straight to action mode
@@ -287,8 +345,8 @@ class InputManager:
         self.list_input.grid()
         self.list_input.focus_force()
         self.current_mode = InputMode.LIST
-        print("Moving focus to list input")
-        print(f"Input mode set to {self.current_mode}")
+        logger.debug("Moving focus to list input")
+        logger.debug(f"Input mode set to {self.current_mode}")
 
     def show_actions(self):
         """Show action selection input"""
@@ -312,7 +370,7 @@ class InputManager:
         self.action_input.focus_force()  # Give it focus for keyboard input
         
         self.current_mode = InputMode.ACTION
-        print("Moving focus to action input (minimal)")
+        logger.debug("Moving focus to action input (minimal)")
 
     def restore_last_mode(self):
         """Restore the last active input mode"""
@@ -332,7 +390,7 @@ class InputManager:
 
     def _handle_action_return(self, event):
         """Handle Return key in action input"""
-        print("Action Return key pressed")
+        logger.debug("Action Return key pressed")
         # Let the SearchWindow._handle_return method handle this
         # by not returning "break" here
         return False

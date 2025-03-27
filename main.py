@@ -10,6 +10,7 @@ import win32api
 import win32con
 from ui.search_window import SearchWindow
 from ui.password_dialog import PasswordDialog
+from ui.state_manager import AppState
 from config import config
 
 class KeePassRetriever:
@@ -87,6 +88,10 @@ class KeePassRetriever:
                 # Lock database, but don't exit if user cancels
                 self.is_locked = True
                 self.kp = None  # Clear the database connection
+                
+                # Transition to LOCKED state if window exists
+                if self.window and hasattr(self.window, 'state_manager'):
+                    self.window.state_manager.transition_to(AppState.LOCKED)
             
             # Schedule next check
             if self.window and self.window.root:
@@ -100,6 +105,10 @@ class KeePassRetriever:
         self.is_locked = True
         self.kp = None  # Clear the database connection
         
+        # Transition to LOCKED state if window exists
+        if self.window and hasattr(self.window, 'state_manager'):
+            self.window.state_manager.transition_to(AppState.LOCKED)
+        
         # Show password dialog
         password = self.get_password()
         if password:
@@ -108,6 +117,11 @@ class KeePassRetriever:
                 self.kp = PyKeePass(db_path, password)
                 self.is_locked = False
                 print("Database unlocked successfully")
+                
+                # Transition back to INITIAL state if window exists
+                if self.window and hasattr(self.window, 'state_manager'):
+                    self.window.state_manager.transition_to(AppState.INITIAL)
+                
                 return True
             except Exception as e:
                 print(f"Error unlocking database: {e}")
@@ -203,6 +217,11 @@ class KeePassRetriever:
             return self.connect_database()
         return True  # Already connected
 
+    def exit_application(self):
+        """Exit the application"""
+        print("\nExiting application...")
+        sys.exit(0)
+        
     def run(self):
         """Run the application"""
         try:
@@ -215,6 +234,9 @@ class KeePassRetriever:
                 self.get_recent_entries  # Callback for getting recent entries
             )
             
+            # Override the exit handler to use our method
+            self.window._handle_exit = self.exit_application
+            
             # Start idle time checking
             self.check_idle_time()
             
@@ -222,6 +244,7 @@ class KeePassRetriever:
             print(f"KeePass Data Retriever running. Press {hotkey} to open search window.")
             print("Right-click the window for menu options.")
             print(f"Database will lock after {self.idle_timeout} seconds of inactivity.")
+            print("Type /exit in any search box to exit the application.")
             
             self.window.run()
 

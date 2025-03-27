@@ -1,12 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import List, Any, Dict
+from .state_manager import StateManager, AppState
+from .logger import Logger
+
+# Get logger instance
+logger = Logger.get_instance()
 
 class ResultsView:
     # Define colors for highlighting
     HIGHLIGHT_BG = '#4a4a4a'  # Much lighter than background for better visibility
     
-    def __init__(self, parent):
+    def __init__(self, parent, state_manager: StateManager = None):
         # Configure styles for highlighting
         self.style = ttk.Style()
         self._configure_highlight_styles()
@@ -18,6 +23,32 @@ class ResultsView:
         # Store entry frames for easy access
         self.entry_frames = []
         self.current_highlight = -1
+        
+        # Store state manager
+        self.state_manager = state_manager
+        
+        # Register as state listener if state manager is provided
+        if self.state_manager:
+            self.state_manager.register_listener(self)
+    
+    def on_state_changed(self, state: AppState, data: Dict[str, Any]) -> None:
+        """Handle state changes"""
+        logger.debug(f"ResultsView: State changed to {state}")
+        
+        if state == AppState.INITIAL:
+            # Clear results when transitioning to initial state
+            self.clear()
+        elif state == AppState.RESULTS_LIST:
+            # Don't show entries here - let SearchWindow handle it
+            # This prevents duplicate entries
+            pass
+        elif state == AppState.ENTRY_ACTIONS:
+            # Clear results when transitioning to entry actions state
+            # (the selected entry will be shown by SearchWindow)
+            self.clear()
+        elif state == AppState.HIDDEN:
+            # Hide results when transitioning to hidden state
+            self.hide()
         
     def _configure_highlight_styles(self):
         """Configure styles for highlighted entries"""

@@ -1,24 +1,73 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Callable
+from typing import Callable, Dict, Any
 import time
 from pynput.keyboard import Controller
 from .dark_button import DarkButton
+from .state_manager import StateManager, AppState
+from .logger import Logger
 import pyautogui
+
+# Get logger instance
+logger = Logger.get_instance()
 
 class ActionButtons:
     # Define colors for highlighting
     HIGHLIGHT_BG = '#5a5a5a'  # Much lighter than background for better visibility
     NORMAL_BG = '#3d3d3d'     # Default button background
     
-    def __init__(self, parent: ttk.Frame, on_action: Callable, entry=None):
+    # Class variable to track instances
+    _instance = None
+    
+    @classmethod
+    def get_instance(cls, parent: ttk.Frame, on_action: Callable, entry=None, state_manager: StateManager = None):
+        """Get or create an instance of ActionButtons"""
+        if cls._instance is None:
+            cls._instance = ActionButtons(parent, on_action, entry, state_manager)
+        else:
+            # Update existing instance
+            cls._instance.on_action = on_action
+            cls._instance.current_entry = entry
+            cls._instance._create_buttons(entry)
+        return cls._instance
+    
+    def __init__(self, parent: ttk.Frame, on_action: Callable, entry=None, state_manager: StateManager = None):
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
         self.on_action = on_action
         self.keyboard = Controller()
-        self.current_entry = None
+        self.current_entry = entry
         self.buttons = []     # Store buttons for highlighting
         self.current_highlight = -1  # Currently highlighted button
+        self.state_manager = state_manager
+        
         self._create_buttons(entry)
+        
+        # Register as state listener if state manager is provided
+        if self.state_manager:
+            self.state_manager.register_listener(self)
+    
+    def on_state_changed(self, state: AppState, data: Dict[str, Any]) -> None:
+        """Handle state changes"""
+        # Only respond to state changes if this is the current instance
+        if self != ActionButtons._instance and ActionButtons._instance is not None:
+            # This is not the current instance, unregister from state manager
+            if self.state_manager:
+                logger.debug("Unregistering old ActionButtons instance from state manager")
+                self.state_manager.unregister_listener(self)
+            return
+            
+        logger.debug(f"ActionButtons: State changed to {state}")
+        
+        if state == AppState.ENTRY_ACTIONS:
+            # Show action buttons for the selected entry
+            entry = data.get('entry')
+            if entry and entry != self.current_entry:
+                self.current_entry = entry
+                self._create_buttons(entry)  # Recreate buttons with the new entry
+                self.show()
+        elif state == AppState.INITIAL or state == AppState.SEARCH or state == AppState.RESULTS_LIST or state == AppState.HIDDEN:
+            # Hide action buttons for other states
+            self.hide()
 
     def _create_buttons(self, entry=None):
         """Create action buttons"""
@@ -54,10 +103,10 @@ class ActionButtons:
     def _handle_action(self, action: str):
         """Handle button actions"""
         if not self.current_entry:
-            print("No entry selected")
+            logger.warning("No entry selected")
             return
         
-        print("Entry ", self.current_entry)
+        logger.debug(f"Entry: {self.current_entry}")
             
         if action.startswith('type_'):
             # For paste actions, get the text first
@@ -122,7 +171,8 @@ class ActionButtons:
         
     def show(self, entry=None):
         """Show action buttons"""
-        self.current_entry = entry
+        if entry:
+            self.current_entry = entry
         self.frame.pack(fill=tk.X, padx=5, pady=5)
         
         # Highlight the first action by default
@@ -135,3 +185,10 @@ class ActionButtons:
         self.frame.pack_forget()
         # Reset highlight when hiding
         self.current_highlight = -1
+        
+        # Unregister from state manager
+        if self.state_manager:
+            self.state_manager.unregister_listener(self)
+            
+        # Clear the class instance reference
+        ActionButtons._instance = None

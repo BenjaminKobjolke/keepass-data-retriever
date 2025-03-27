@@ -21,7 +21,8 @@ class Config:
         self.config['General'] = {
             'search_reset_timeout': '180',  # 3 minutes in seconds
             'database_idle_timeout': '3600',  # 1 hour in seconds
-            'database_path': 'Database.kdbx'  # Default database path
+            'database_path': 'Database.kdbx',  # Default database path
+            'debug_mode': 'false'  # Debug mode disabled by default
         }
         self.config['Hotkeys'] = {
             'search_hotkey': 'alt + shift + F8'
@@ -64,6 +65,14 @@ class Config:
             return self.config.get('General', 'database_path')
         except (configparser.NoSectionError, configparser.NoOptionError):
             return 'Database.kdbx'  # Default fallback
+            
+    def get_debug_mode(self) -> bool:
+        """Get debug mode from config"""
+        try:
+            debug_mode = self.config.get('General', 'debug_mode').lower()
+            return debug_mode in ('true', 'yes', '1', 'on')
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return False  # Default: debug mode disabled
 
 # Create a singleton instance
 config = Config()
