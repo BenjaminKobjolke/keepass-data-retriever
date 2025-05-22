@@ -23,7 +23,7 @@ class Config:
             'database_idle_timeout': '3600',  # 1 hour in seconds
             'database_path': 'Database.kdbx',  # Default database path
             'debug_mode': 'false',  # Debug mode disabled by default
-            'window_position': 'mouse'  # Window position mode: 'mouse' or 'center'
+            'window_position': 'mouse'  # Window position mode: 'mouse', 'center', or 'center_screen'
         }
         self.config['Hotkeys'] = {
             'search_hotkey': 'alt + shift + F8'
@@ -79,7 +79,7 @@ class Config:
         """Get window position mode from config"""
         try:
             mode = self.config.get('General', 'window_position').lower()
-            if mode in ('mouse', 'center'):
+            if mode in ('mouse', 'center', 'center_screen'):
                 return mode
             return 'mouse'  # Default if invalid value
         except (configparser.NoSectionError, configparser.NoOptionError):

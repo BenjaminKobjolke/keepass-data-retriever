@@ -3,6 +3,7 @@ from tkinter import ttk
 from typing import Optional, Callable
 import win32gui
 import win32con
+import win32api
 import time
 import sys
 import os
@@ -106,6 +107,27 @@ class WindowManager:
         # Bind right-click on root window to show menu
         self.root.bind('<Button-3>', lambda e: self.menu.post(e.x_root, e.y_root))
 
+    def _position_window_center_screen(self):
+        """Position window in center of screen"""
+        try:
+            # Get screen dimensions
+            screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
+            screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+            
+            # Calculate center position
+            window_width = self.WINDOW_WIDTH
+            window_height = self.WINDOW_HEIGHT_EXPANDED if self.window_expanded else self.WINDOW_HEIGHT_NORMAL
+            
+            center_x = (screen_width - window_width) // 2
+            center_y = (screen_height - window_height) // 2
+            
+            # Set window position
+            self.root.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
+        except Exception as e:
+            # Fallback to mouse position if error
+            print(f"Error positioning window in center of screen: {e}")
+            self._position_window_mouse()
+    
     def _position_window(self):
         """Position window based on settings"""
         # Get window position mode from config
@@ -114,6 +136,9 @@ class WindowManager:
         if position_mode == 'center':
             # Center in active window
             self._position_window_center()
+        elif position_mode == 'center_screen':
+            # Center on screen
+            self._position_window_center_screen()
         else:
             # Default: position at mouse cursor
             self._position_window_mouse()
