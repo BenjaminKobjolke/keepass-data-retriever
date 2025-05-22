@@ -1,7 +1,10 @@
 from typing import Callable
-from global_hotkeys import *
-import threading
-import time
+# Import directly from the winhotkeys library
+try:
+    from winhotkeys import HotkeyHandler
+except ImportError:
+    # If that fails, try a direct import from the local file
+    from hotkey import HotkeyHandler
 import sys
 import os
 import re
@@ -12,7 +15,7 @@ from config import config
 
 class HotkeyManager:
     # Default hotkey to use if the configured one fails
-    DEFAULT_HOTKEY = "alt + shift + F8"
+    DEFAULT_HOTKEY = "alt+ctrl+F8"
     
     # List of supported modifier keys
     SUPPORTED_MODIFIERS = ["alt", "ctrl", "shift"]
@@ -24,7 +27,6 @@ class HotkeyManager:
     
     def __init__(self, on_activate: Callable):
         self.on_activate = on_activate
-        self.is_alive = True
         
         # Get hotkey from config
         configured_hotkey = config.get_search_hotkey()
@@ -36,15 +38,25 @@ class HotkeyManager:
             print(f"Warning: Invalid hotkey format '{configured_hotkey}'. Using default: {self.DEFAULT_HOTKEY}")
             hotkey = self.DEFAULT_HOTKEY
         
-        # Define hotkey binding
-        bindings = [
-            [hotkey, None, self._on_hotkey, False]  # False = don't actuate on partial release
-        ]
-        
-        # Start listener in a separate thread
-        thread = threading.Thread(target=self._start_listener, args=(bindings,))
-        thread.daemon = True
-        thread.start()
+        try:
+            # Create hotkey handler
+            print(f"Registering hotkey: {hotkey}")
+            self.hotkey_handler = HotkeyHandler(hotkey, self._on_hotkey, suppress=True)
+            
+            # Start listening
+            self.hotkey_handler.start()
+        except Exception as e:
+            print(f"Hotkey registration error: {e}")
+            print("Falling back to default hotkey...")
+            
+            try:
+                # Try with default hotkey
+                self.hotkey_handler = HotkeyHandler(self.DEFAULT_HOTKEY, self._on_hotkey, suppress=True)
+                self.hotkey_handler.start()
+                print(f"Successfully registered fallback hotkey: {self.DEFAULT_HOTKEY}")
+            except Exception as e2:
+                print(f"Critical error registering fallback hotkey: {e2}")
+                self.hotkey_handler = None
 
     def _on_hotkey(self):
         """Handle hotkey activation"""
@@ -78,8 +90,8 @@ class HotkeyManager:
             else:
                 translated_parts.append(part)
         
-        # Reconstruct the hotkey string
-        translated_hotkey = ' + '.join(translated_parts)
+        # Reconstruct the hotkey string - winhotkeys uses format without spaces
+        translated_hotkey = '+'.join(translated_parts)
         
         # Check if we have at least one modifier and one key
         if len(parts) < 2:
@@ -96,53 +108,16 @@ class HotkeyManager:
             if modifier not in self.SUPPORTED_MODIFIERS and modifier != "win":
                 return self.DEFAULT_HOTKEY, False
         
-        # Special handling for 'win' key - it's not directly supported
+        # Special handling for 'win' key - check if it's supported by winhotkeys
         if "win" in modifiers:
-            print("Warning: 'win' key is not supported by the global_hotkeys package.")
-            return self.DEFAULT_HOTKEY, False
+            print("Warning: 'win' key might not be fully supported.")
         
         return translated_hotkey, True
 
-    def _start_listener(self, bindings):
-        """Start the hotkey listener"""
-        try:
-            # Register hotkeys
-            print(f"Registering hotkey: {bindings[0][0]}")
-            register_hotkeys(bindings)
-            
-            # Start listening
-            start_checking_hotkeys()
-            
-            # Keep thread alive
-            while self.is_alive:
-                time.sleep(0.1)
-        except Exception as e:
-            print(f"Hotkey registration error: {e}")
-            print("Falling back to default hotkey...")
-            
-            try:
-                # Try with default hotkey
-                clear_hotkeys()
-                fallback_bindings = [
-                    [self.DEFAULT_HOTKEY, None, self._on_hotkey, False]
-                ]
-                register_hotkeys(fallback_bindings)
-                start_checking_hotkeys()
-                
-                print(f"Successfully registered fallback hotkey: {self.DEFAULT_HOTKEY}")
-                
-                # Keep thread alive
-                while self.is_alive:
-                    time.sleep(0.1)
-            except Exception as e2:
-                print(f"Critical error registering fallback hotkey: {e2}")
-        finally:
-            self.stop()
-
     def stop(self):
         """Stop the hotkey listener"""
-        self.is_alive = False
-        try:
-            stop_checking_hotkeys()
-        except:
-            pass  # Ignore errors during shutdown
+        if hasattr(self, 'hotkey_handler') and self.hotkey_handler:
+            try:
+                self.hotkey_handler.stop()
+            except:
+                pass  # Ignore errors during shutdown
