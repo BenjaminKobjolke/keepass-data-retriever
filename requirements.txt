@@ -5,7 +5,7 @@ certifi==2024.8.30
 cffi==1.17.1
 charset-normalizer==3.4.0
 construct==2.10.70
-winhotkeys==0.1.0
+global_hotkeys==0.1.7
 idna==3.10
 keepasshttp==1.4.1
 keyboard==0.13.5
@@ -34,3 +34,4 @@ pywin32-ctypes==0.2.3
 requests==2.32.3
 six==1.17.0
 urllib3==2.2.3
+winhotkeys @ git+https://github.com/BenjaminKobjolke/winhotkeys.git@053b0b20bd5d747a4b795d0d392a4a48161fcada
