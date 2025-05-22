@@ -7,3 +7,6 @@ __pycache__
 /keepass-data-retriever.bat
 settings.ini
 window-relations.json
+dist
+build
+KeepassDataRetriever.spec
