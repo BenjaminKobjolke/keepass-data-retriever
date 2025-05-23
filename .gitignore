@@ -4,7 +4,6 @@
 /__pycache__
 __pycache__
 /start.bat
-/keepass-data-retriever.bat
 settings.ini
 window-relations.json
 dist
