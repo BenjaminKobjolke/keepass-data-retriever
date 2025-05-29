@@ -37,6 +37,7 @@ class SearchWindow:
         # Create root window
         self.root = tk.Tk()
         
+        self.active_window_title_at_last_hide: Optional[str] = None
         # Track last hotkey activation time
         self.last_hotkey_time = 0  # Initialize to 0 (epoch time)
         
@@ -185,11 +186,10 @@ class SearchWindow:
 
     def show_window(self):
         """Show the window"""
-        # Log active window title before showing the window
-        current_window_title = None
+        newly_logged_window_title = None
         try:
-            current_window_title = self.window_relations_manager.log_active_window()
-            logger.debug(f"Active window title: {current_window_title}")
+            newly_logged_window_title = self.window_relations_manager.log_active_window()
+            logger.debug(f"Active window title after logging: {newly_logged_window_title}")
         except Exception as e:
             logger.error(f"Error logging active window: {e}")
             
@@ -199,51 +199,54 @@ class SearchWindow:
             return
             
         current_time = time.time()
-        
         # Show the window first
         self.window.show()
         
         # Get current state
-        current_state = self.state_manager.get_current_state()
-        logger.debug(f"Current state before processing: {current_state}")
-        
-        # Check if we're in the STARTING state (first time showing the window)
-        if current_state == AppState.STARTING:
-            logger.debug("First time showing window, transitioning to INITIAL state")
-            # Add window_relations_manager to data for state handler
-            data = {'window_relations_manager': self.window_relations_manager}
-            # Transition to INITIAL state
-            self.state_manager.transition_to(AppState.INITIAL, data)
-        # Check if more than the configured time has passed since last activation
+        current_app_state = self.state_manager.get_current_state()
+        logger.debug(f"Current state before processing: {current_app_state}, last hidden title: '{self.active_window_title_at_last_hide}', new title: '{newly_logged_window_title}'")
+
+        # Determine if window context changed since last hide
+        context_changed = False
+        if self.active_window_title_at_last_hide is not None and \
+           self.active_window_title_at_last_hide != newly_logged_window_title:
+            logger.info(f"Window context changed from '{self.active_window_title_at_last_hide}' to '{newly_logged_window_title}'. Triggering reset to INITIAL.")
+            context_changed = True
+
+        # Conditions for resetting to INITIAL state
+        reset_to_initial = False
+        reset_reason = ""
+
+        if context_changed:
+            reset_to_initial = True
+            reset_reason = "context changed"
+        elif current_app_state == AppState.STARTING:
+            reset_to_initial = True
+            reset_reason = "first time showing window"
         elif current_time - self.last_hotkey_time > config.get_search_reset_timeout():
-            logger.debug("Search reset timeout exceeded, transitioning to INITIAL state")
-            # Add window_relations_manager to data for state handler
+            reset_to_initial = True
+            reset_reason = "search reset timeout exceeded"
+
+        if reset_to_initial:
+            logger.debug(f"{reset_reason}, transitioning to INITIAL state")
             data = {'window_relations_manager': self.window_relations_manager}
-            # Transition to INITIAL state
             self.state_manager.transition_to(AppState.INITIAL, data)
-        # Check if we're coming from HIDDEN state
-        elif current_state == AppState.HIDDEN:
-            # Get previous state
+        elif current_app_state == AppState.HIDDEN:
             previous_state = self.state_manager.get_previous_state()
-            logger.debug(f"Coming from HIDDEN state, previous state was: {previous_state}")
+            logger.debug(f"Coming from HIDDEN state (no reset conditions met), previous state was: {previous_state}")
             
-            # If previous state was INITIAL, transition back to INITIAL with window_relations_manager
             if previous_state == AppState.INITIAL:
                 logger.debug("Previous state was INITIAL, transitioning back to INITIAL with window_relations_manager")
                 data = {'window_relations_manager': self.window_relations_manager}
                 self.state_manager.transition_to(AppState.INITIAL, data)
             else:
-                # Try to restore previous state
-                logger.debug("Attempting to restore previous state")
+                logger.debug("Attempting to restore previous state (from HIDDEN)")
                 if not self.state_handler.restore_previous_state():
-                    # Default to restoring the last input mode
                     logger.debug("No previous state to restore, using default restore_last_mode")
                     self.input.restore_last_mode()
         else:
-            # Try to restore previous state
-            logger.debug("Attempting to restore previous state")
+            logger.debug(f"Not STARTING, not HIDDEN, no reset conditions met. Current state: {current_app_state}. Attempting to restore previous state or current mode.")
             if not self.state_handler.restore_previous_state():
-                # Default to restoring the last input mode
                 logger.debug("No previous state to restore, using default restore_last_mode")
                 self.input.restore_last_mode()
         
@@ -278,6 +281,10 @@ class SearchWindow:
 
     def hide(self):
         """Hide the window"""
+        # Store the current window title when hiding. This title is associated with the UI state before hiding.
+        self.active_window_title_at_last_hide = self.window_relations_manager.current_window_title
+        logger.debug(f"Storing active_window_title_at_last_hide: '{self.active_window_title_at_last_hide}'")
+
         # Get current state and data before transitioning to HIDDEN
         current_state = self.state_manager.get_current_state()
         current_data = self.state_manager.get_state_data()
