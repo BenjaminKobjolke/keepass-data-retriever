@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Optional
 from .state_manager import StateManager, AppState
 from .logger import Logger
 
@@ -9,7 +9,8 @@ logger = Logger.get_instance()
 
 class ResultsView:
     # Define colors for highlighting
-    HIGHLIGHT_BG = '#4a4a4a'  # Much lighter than background for better visibility
+    HIGHLIGHT_BG = '#2E2E2E'  # Dark gray for highlighted entries
+    RECENT_ENTRY_BG = '#063970'
     
     def __init__(self, parent, state_manager: StateManager = None):
         # Configure styles for highlighting
@@ -51,31 +52,64 @@ class ResultsView:
             self.hide()
         
     def _configure_highlight_styles(self):
-        """Configure styles for highlighted entries"""
+        """Configure styles for highlighted entries"""        
+        
+        #self.style.theme_use('clam') # Use 'clam' theme for better control over styles
+        
         # Get the background color from the Dark.TFrame style
         bg_color = self.style.lookup('Dark.TFrame', 'background')
         fg_color = self.style.lookup('Dark.TLabel', 'foreground')
+        url_font = ('Segoe UI', 10)
+        normal_font = ('Segoe UI', 11)
         
         # Create highlighted frame style
         self.style.configure('Highlighted.TFrame', 
-            background=self.HIGHLIGHT_BG
+            background=self.HIGHLIGHT_BG,
+            relief='solid',
+            borderwidth=1
         )
         
         # Create highlighted label style
         self.style.configure('Highlighted.TLabel',
             background=self.HIGHLIGHT_BG,
             foreground=fg_color,
-            font=('Segoe UI', 11)
+            font=normal_font
         )
         
         # Create highlighted URL label style
         self.style.configure('HighlightedURL.TLabel',
             background=self.HIGHLIGHT_BG,
             foreground=fg_color,
-            font=('Segoe UI', 10)
+            font=url_font
         )
 
-    def show_entries(self, entries: List[Any]):
+        # Styles for recent entries
+        self.style.configure('RecentEntry.TFrame', background=self.RECENT_ENTRY_BG)
+        self.style.configure('RecentEntry.TLabel',
+            background=self.RECENT_ENTRY_BG,
+            foreground=fg_color,
+            font=normal_font
+        )
+        self.style.configure('RecentEntryURL.TLabel',
+            background=self.RECENT_ENTRY_BG,
+            foreground=fg_color,
+            font=url_font
+        )
+
+        # Styles for highlighted recent entries (using same highlight color for now)
+        self.style.configure('HighlightedRecentEntry.TFrame', background=self.HIGHLIGHT_BG)
+        self.style.configure('HighlightedRecentEntry.TLabel',
+            background=self.HIGHLIGHT_BG,
+            foreground=fg_color,
+            font=normal_font
+        )
+        self.style.configure('HighlightedRecentEntryURL.TLabel',
+            background=self.HIGHLIGHT_BG,
+            foreground=fg_color,
+            font=url_font
+        )
+
+    def show_entries(self, entries: List[Any], is_recent_list: bool = False):
         """Show list of entries"""
         # Clear previous entries
         self.clear()
@@ -83,18 +117,23 @@ class ResultsView:
         # Reset entry frames list and highlight index
         self.entry_frames = []
         self.current_highlight = -1
-        
+
+        base_frame_style = 'RecentEntry.TFrame' if is_recent_list else 'Dark.TFrame'
+        base_label_style = 'RecentEntry.TLabel' if is_recent_list else 'Dark.TLabel'
+        base_url_label_style = 'RecentEntryURL.TLabel' if is_recent_list else 'Dark.TLabel' # DarkURL.TLabel if defined
+
         # Show entries
         for i, entry in enumerate(entries, 1):
             # Create frame for each entry
-            entry_frame = ttk.Frame(self.entries_frame, style='Dark.TFrame')
+            entry_frame = ttk.Frame(self.entries_frame, style=base_frame_style)
             entry_frame.pack(fill=tk.X, padx=5, pady=3)
             
             # Store the frame and associated entry
             self.entry_frames.append({
                 'frame': entry_frame,
                 'entry': entry,
-                'index': i - 1  # Store zero-based index
+                'index': i - 1,  # Store zero-based index
+                'is_recent': is_recent_list
             })
             
             # Title and username
@@ -106,7 +145,7 @@ class ResultsView:
                 entry_frame,
                 text=title_text,
                 wraplength=360,  # Increased for larger window
-                style='Dark.TLabel',
+                style=base_label_style,
                 font=('Segoe UI', 11)  # Larger font
             )
             title_label.pack(fill=tk.X, anchor='w')
@@ -117,11 +156,16 @@ class ResultsView:
                     entry_frame,
                     text=f"   {entry.url}",
                     wraplength=360,  # Increased for larger window
-                    style='Dark.TLabel',
+                    style=base_url_label_style,
                     font=('Segoe UI', 10)  # Slightly smaller for URL
                 )
                 url_label.pack(fill=tk.X, anchor='w')
-        
+            
+            # Bind click event to the frame and its children
+            entry_frame.bind('<Button-1>', lambda e, entry=entry: self._on_entry_click(entry))
+            for child in entry_frame.winfo_children():
+                child.bind('<Button-1>', lambda e, entry=entry: self._on_entry_click(entry))
+                
         # Show the frame
         self.frame.pack(fill=tk.BOTH, expand=True)
 
@@ -145,40 +189,46 @@ class ResultsView:
             return None
             
         # Clear previous highlight if any
-        if self.current_highlight >= 0 and self.current_highlight < len(self.entry_frames):
-            prev_frame = self.entry_frames[self.current_highlight]['frame']
-            prev_frame.configure(style='Dark.TFrame')
-            
-            # Change style of all child labels
+        if 0 <= self.current_highlight < len(self.entry_frames):
+            prev_details = self.entry_frames[self.current_highlight]
+            prev_frame = prev_details['frame']
+            is_prev_recent = prev_details['is_recent']
+
+            prev_frame.configure(style='RecentEntry.TFrame' if is_prev_recent else 'Dark.TFrame')
             for child in prev_frame.winfo_children():
                 if isinstance(child, ttk.Label):
-                    # Check if it's a URL label (smaller font)
                     if child.cget('font') == ('Segoe UI', 10):
-                        child.configure(style='Dark.TLabel')
+                        child.configure(style='RecentEntryURL.TLabel' if is_prev_recent else 'Dark.TLabel') # Or DarkURL.TLabel
                     else:
-                        child.configure(style='Dark.TLabel')
+                        child.configure(style='RecentEntry.TLabel' if is_prev_recent else 'Dark.TLabel')
         
         # Set new highlight
         self.current_highlight = index
-        current_frame = self.entry_frames[index]['frame']
-        current_frame.configure(style='Highlighted.TFrame')
-        
-        # Change style of all child labels
+        current_details = self.entry_frames[index]
+        current_frame = current_details['frame']
+        is_current_recent = current_details['is_recent']
+
+        current_frame.configure(style='HighlightedRecentEntry.TFrame' if is_current_recent else 'Highlighted.TFrame')
         for child in current_frame.winfo_children():
             if isinstance(child, ttk.Label):
-                # Check if it's a URL label (smaller font)
                 if child.cget('font') == ('Segoe UI', 10):
-                    child.configure(style='HighlightedURL.TLabel')
+                    child.configure(style='HighlightedRecentEntryURL.TLabel' if is_current_recent else 'HighlightedURL.TLabel')
                 else:
-                    child.configure(style='Highlighted.TLabel')
+                    child.configure(style='HighlightedRecentEntry.TLabel' if is_current_recent else 'Highlighted.TLabel')
                 
         # Return the entry object
-        return self.entry_frames[index]['entry']
+        return current_details['entry']
         
     def get_current_highlight(self) -> int:
         """Get the index of the currently highlighted entry"""
         return self.current_highlight
         
+    def get_current_highlighted_entry_details(self) -> Optional[Dict[str, Any]]:
+        """Get the details of the currently highlighted entry"""
+        if 0 <= self.current_highlight < len(self.entry_frames):
+            return self.entry_frames[self.current_highlight]
+        return None
+
     def get_entry_count(self) -> int:
         """Get the number of entries"""
         return len(self.entry_frames)

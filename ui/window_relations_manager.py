@@ -149,3 +149,25 @@ class WindowRelationsManager:
         recent_entries = self.relations[window_index].get("recent_entries", [])
         logger.debug(f"Found recent entries: {recent_entries}")
         return recent_entries
+
+    def remove_recent_entry(self, window_title: str, entry_uuid: str) -> None:
+        """Remove a specific entry_uuid from the recent_entries list for the given window_title."""
+        if not window_title:
+            logger.warning("Cannot remove recent entry: window_title is None or empty.")
+            return
+
+        window_index = self._find_window_index(window_title)
+        if window_index == -1:
+            logger.warning(f"Cannot remove recent entry: window title '{window_title}' not found in relations.")
+            return
+
+        window_data = self.relations[window_index]
+        recent_entries = window_data.get("recent_entries", [])
+
+        if entry_uuid in recent_entries:
+            recent_entries.remove(entry_uuid)
+            # No need to reassign `window_data["recent_entries"] = recent_entries` as `recent_entries` is a reference to the list in `window_data`
+            self._save_relations()
+            logger.info(f"Removed entry UUID '{entry_uuid}' from recent entries for window '{window_title}'.")
+        else:
+            logger.debug(f"Entry UUID '{entry_uuid}' not found in recent_entries for window '{window_title}'. No action taken.")

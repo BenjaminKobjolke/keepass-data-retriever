@@ -152,7 +152,7 @@ class KeePassRetriever:
             if all(term in searchable_title or term in searchable_username for term in search_terms):
                 entries.append(entry)
                 
-        self.window.show_entries(entries)
+        self.window.show_entries(entries, is_recent_list=False)
 
     def handle_select(self, entry):
         """Handle entry selection"""

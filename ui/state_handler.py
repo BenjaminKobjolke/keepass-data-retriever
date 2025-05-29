@@ -150,7 +150,7 @@ class StateHandler:
         
         # Show entries in the results view and keep search input active
         # Skip state transition to avoid infinite loop
-        self.show_entries_callback(entries, keep_search_mode=True, skip_state_transition=True)
+        self.show_entries_callback(entries, keep_search_mode=True, skip_state_transition=True, is_recent_list=True)
     
     def restore_previous_state(self) -> bool:
         """Restore previous state based on what was active before hiding"""
@@ -170,7 +170,11 @@ class StateHandler:
             if previous_state == AppState.RESULTS_LIST and 'entries' in previous_data:
                 # Restore the results list with the entries
                 logger.debug(f"Restoring results list with {len(previous_data['entries'])} entries")
-                self.show_entries_callback(previous_data['entries'], keep_search_mode=True, skip_state_transition=True)
+                # Determine if this was a recent list. If data has 'is_recent_list_active' or similar, use it.
+                # For now, assume if it was RESULTS_LIST, it could be search or recent.
+                # If `previous_data` had an indicator for `is_recent_list`, we'd use it.
+                # Let's assume for now it was a search result unless specific logic for recent is added here.
+                self.show_entries_callback(previous_data['entries'], keep_search_mode=True, skip_state_transition=True, is_recent_list=False) # Default to False for generic restore
                 # Set the current state directly without triggering listeners
                 self.state_manager._current_state = AppState.RESULTS_LIST
                 self.state_manager._state_data = previous_data

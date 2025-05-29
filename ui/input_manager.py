@@ -17,7 +17,7 @@ class InputManager:
     def __init__(self, parent: ttk.Frame, on_search: Callable, on_select: Callable, 
                  on_action: Callable, on_escape: Callable, on_reset: Callable, 
                  entry_class: Type[ttk.Entry], on_enter_action: Callable = None,
-                 on_highlight_change: Callable = None, on_action_highlight_change: Callable = None,
+                 on_highlight_change: Callable = None, on_action_highlight_change: Callable = None, on_delete_entry: Callable = None,
                  on_show_initial_view: Callable = None, state_manager: StateManager = None,
                  on_exit: Callable = None):
         self.on_search = on_search
@@ -30,6 +30,7 @@ class InputManager:
         self.on_action_highlight_change = on_action_highlight_change
         self.on_show_initial_view = on_show_initial_view
         self.state_manager = state_manager
+        self.on_delete_entry = on_delete_entry
         self.on_exit = on_exit  # Callback for exiting the application
         
         # Create input frame to position all inputs
@@ -60,6 +61,10 @@ class InputManager:
         self.action_input.bind('<Key>', self._handle_action_key)
         self.action_input.bind('<Return>', self._handle_action_return)
         
+        # Bind Delete key to search and list inputs
+        self.search_input.bind('<Delete>', self._handle_delete_key)
+        self.list_input.bind('<Delete>', self._handle_delete_key)
+
         # Bind ESC key to all inputs
         self.search_input.bind('<Escape>', self._handle_escape)
         self.list_input.bind('<Escape>', self._handle_escape)
@@ -398,6 +403,14 @@ class InputManager:
         # by not returning "break" here
         return False
         
+    def _handle_delete_key(self, event):
+        """Handle Delete key in search or list mode"""
+        logger.debug(f"Delete key pressed in mode: {self.current_mode}")
+        if self.on_delete_entry and self.current_entry:
+            self.on_delete_entry(self.current_entry)
+            return "break" # Consume the event
+        return False # Allow default behavior if no action taken
+
     def handle_return(self):
         """Handle Return key to reactivate search"""
         if self.search_input != self.search_input.focus_get():

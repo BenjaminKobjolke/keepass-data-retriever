@@ -38,6 +38,7 @@ class SearchWindow:
         self.root = tk.Tk()
         
         self.active_window_title_at_last_hide: Optional[str] = None
+        self.is_recent_list_active: bool = False # Flag to track if current list is from window-relations
         # Track last hotkey activation time
         self.last_hotkey_time = 0  # Initialize to 0 (epoch time)
         
@@ -80,6 +81,7 @@ class SearchWindow:
             self.entry_actions_handler.handle_return_key,
             self._handle_highlight_change,
             self.entry_actions_handler.handle_highlight_change,
+            self._handle_delete_recent_entry, # Callback for delete key
             self.show_initial_view,
             self.state_manager,  # Pass the state manager to InputManager
             self._handle_exit    # Pass the exit handler
@@ -150,6 +152,27 @@ class SearchWindow:
         self.results.clear()
         self.entry_actions_handler.cleanup()
 
+        # If _handle_reset is called and it's not for showing a recent list,
+        # then the "recent list active" flag should be false.
+        # This will be set to true if show_recent_entries or show_entries(is_recent_list=True) is called.
+        # A bit indirect, but show_entries will manage self.is_recent_list_active.
+        # For now, let's assume if we are resetting and not immediately showing recent entries,
+        # it's not a recent list.
+        # A better place to set this is in show_entries itself.
+
+        # Check if we're in INITIAL state and handling a new window
+        current_state = self.state_manager.get_current_state()
+        # If this reset is part of transitioning to INITIAL or a direct search,
+        # then the list shown (if any) won't be "recent entries" in the deletable sense.
+        # The `is_recent_list_active` flag is managed by `show_entries`.
+        # So, if `self.input.entries` exists and we are showing them, `show_entries` will be called,
+        # and it will use its `is_recent_list` parameter (defaulting to False)
+        # to set `self.is_recent_list_active`.
+        
+        # The logic below for showing `self.input.entries` will call `show_entries`
+        # which will set `is_recent_list_active` to False by default.
+        # If this reset is part of initial view, `show_recent_entries` will later call `show_entries` with `is_recent_list=True`.
+
         # Check if we're in INITIAL state and handling a new window
         current_state = self.state_manager.get_current_state()
         if current_state == AppState.INITIAL:
@@ -165,7 +188,7 @@ class SearchWindow:
         if self.input.entries and len(self.input.entries) > 0:
             logger.debug(f"Showing {len(self.input.entries)} entries")
             # Show the entries (skip state transition to avoid infinite loop)
-            self.show_entries(self.input.entries, keep_search_mode=True, skip_state_transition=True)
+            self.show_entries(self.input.entries, keep_search_mode=True, skip_state_transition=True, is_recent_list=False) # These are restored, not "recent" in deletable sense
             self.window.set_expanded(True)
             self.status.set_text("Recent entries for this window:")
             
@@ -349,10 +372,39 @@ class SearchWindow:
         # Ensure the window is expanded to show results
         self.window.set_expanded(True)
             
-    def show_entries(self, entries: List[Any], keep_search_mode=True, skip_state_transition=False):
+    def _handle_delete_recent_entry(self, entry_to_delete: Any):
+        """Handle delete request for a recent entry"""
+        if not self.is_recent_list_active:
+            logger.debug("Delete key pressed, but not in recent list mode. Ignoring.")
+            return
+
+        if not entry_to_delete:
+            logger.warning("Delete recent entry requested, but no entry is selected.")
+            return
+
+        current_window_title = self.window_relations_manager.current_window_title
+        if not current_window_title:
+            logger.warning("Delete recent entry requested, but current window title is unknown.")
+            return
+
+        try:
+            entry_uuid = str(entry_to_delete.uuid)
+            logger.info(f"Requesting deletion of recent entry UUID '{entry_uuid}' for window '{current_window_title}'.")
+            self.window_relations_manager.remove_recent_entry(current_window_title, entry_uuid)
+            # Refresh the view by transitioning to INITIAL state, which re-fetches recent entries
+            logger.debug("Transitioning to INITIAL state to refresh recent entries view after deletion.")
+            self.state_manager.transition_to(AppState.INITIAL, {'window_relations_manager': self.window_relations_manager})
+        except AttributeError:
+            logger.error(f"Failed to get UUID from entry: {entry_to_delete}. Cannot delete.")
+        except Exception as e:
+            logger.error(f"Error during recent entry deletion: {e}")
+
+    def show_entries(self, entries: List[Any], keep_search_mode=True, skip_state_transition=False, is_recent_list: bool = False):
         """Show search results"""
-        logger.debug(f"Showing {len(entries)} entries, keep_search_mode={keep_search_mode}")
+        logger.debug(f"Showing {len(entries)} entries, keep_search_mode={keep_search_mode}, is_recent_list={is_recent_list}")
         
+        self.is_recent_list_active = is_recent_list # Update flag based on current call
+
         # Clear previous results
         self.results.clear()
         self.entry_actions_handler.cleanup()
@@ -388,7 +440,7 @@ class SearchWindow:
                 self.state_manager.transition_to(AppState.RESULTS_LIST, {'entries': entries})
             
             self.window.set_expanded(True)
-            self.results.show_entries(entries)
+            self.results.show_entries(entries, is_recent_list=is_recent_list)
             self.status.show_search_results(entries)
             
             if keep_search_mode:
