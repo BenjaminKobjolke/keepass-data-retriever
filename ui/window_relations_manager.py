@@ -52,6 +52,7 @@ class WindowRelationsManager:
             
             if window_title:
                 logger.debug(f"Active window title: {window_title}")
+                print(f"DEBUG: Current window title detected: '{window_title}'")
                 self.current_window_title = window_title
                 
                 # Find window in relations
@@ -136,18 +137,22 @@ class WindowRelationsManager:
         """Get recent entry IDs for the current window"""
         if not self.current_window_title:
             logger.debug("No current window title, cannot get recent entries")
+            print("DEBUG: No current window title, cannot get recent entries")
             return []
         
         logger.debug(f"Getting recent entries for window: {self.current_window_title}")
+        print(f"DEBUG: Looking for recent entries for window: '{self.current_window_title}'")
         window_index = self._find_window_index(self.current_window_title)
         logger.debug(f"Window index in relations: {window_index}")
         
         if window_index == -1:
             logger.debug(f"Window title not found in relations: {self.current_window_title}")
+            print(f"DEBUG: Window title '{self.current_window_title}' not found in window-relations.json")
             return []
         
         recent_entries = self.relations[window_index].get("recent_entries", [])
         logger.debug(f"Found recent entries: {recent_entries}")
+        print(f"DEBUG: Found {len(recent_entries)} recent entries for this window: {recent_entries}")
         return recent_entries
 
     def remove_recent_entry(self, window_title: str, entry_uuid: str) -> None:

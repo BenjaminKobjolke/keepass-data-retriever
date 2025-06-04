@@ -189,8 +189,17 @@ class KeePassRetriever:
         from ui.logger import Logger
         logger = Logger.get_instance()
         
+        print(f"DEBUG: Searching for {len(uuids)} UUIDs in KeePass database: {uuids}")
+        
+        # Ensure database is connected before attempting to find entries
+        if not self.lazy_connect_database():
+            logger.debug("Cannot find entries: database connection failed")
+            print("DEBUG: Database connection failed")
+            return []
+        
         if self.is_locked or not self.kp:
             logger.debug("Cannot find entries: database is locked or not connected")
+            print("DEBUG: Database is locked or not connected")
             return []
             
         logger.debug(f"Finding entries for {len(uuids)} UUIDs: {uuids}")
@@ -198,10 +207,12 @@ class KeePassRetriever:
         # Check if we have any entries at all
         if not self.kp.entries:
             logger.debug("No entries in the database")
+            print("DEBUG: No entries in the database")
             return []
             
         # Log total number of entries in database for debugging
         logger.debug(f"Total entries in database: {len(self.kp.entries)}")
+        print(f"DEBUG: Total entries in database: {len(self.kp.entries)}")
         
         entries = []
         for uuid_str in uuids:
@@ -214,9 +225,11 @@ class KeePassRetriever:
                 entry = self.kp.find_entries(uuid=uuid_obj, first=True)
                 if entry:
                     logger.debug(f"Found entry: {entry.title} (UUID: {entry.uuid})")
+                    print(f"DEBUG: Found entry in database: '{entry.title}' (UUID: {entry.uuid})")
                     entries.append(entry)
                 else:
                     logger.debug(f"No entry found for UUID: {uuid_str}")
+                    print(f"DEBUG: No entry found for UUID: {uuid_str}, trying manual search...")
                     
                     # Try to find the entry by iterating through all entries
                     # This is a fallback in case the find_entries method doesn't work
@@ -224,18 +237,22 @@ class KeePassRetriever:
                     for e in self.kp.entries:
                         if str(e.uuid) == uuid_str:
                             logger.debug(f"Found entry by manual search: {e.title} (UUID: {e.uuid})")
+                            print(f"DEBUG: Found entry by manual search: '{e.title}' (UUID: {e.uuid})")
                             entries.append(e)
                             found = True
                             break
                     
                     if not found:
                         logger.debug(f"Entry not found even with manual search: {uuid_str}")
+                        print(f"DEBUG: Entry not found even with manual search: {uuid_str}")
             except Exception as e:
                 logger.error(f"Error finding entry with UUID {uuid_str}: {e}")
+                print(f"DEBUG: Error finding entry with UUID {uuid_str}: {e}")
                 import traceback
                 logger.error(traceback.format_exc())
         
         logger.debug(f"Found {len(entries)} entries total")
+        print(f"DEBUG: Found {len(entries)} entries total in database")
         return entries
         
     def get_recent_entries(self, entry_ids):

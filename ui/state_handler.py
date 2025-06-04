@@ -67,20 +67,24 @@ class StateHandler:
                 if recent_entry_ids:
                     # Get entries from KeePass database
                     logger.debug(f"Getting entries from KeePass database for IDs: {recent_entry_ids}")
-                    recent_entries = self.on_get_recent_entries(recent_entry_ids)
-                    
-                    if recent_entries:
-                        logger.debug(f"Found {len(recent_entries)} recent entries")
-                        # Log entry titles for debugging
-                        for i, entry in enumerate(recent_entries):
-                            logger.debug(f"  Entry {i+1}: {entry.title} (UUID: {entry.uuid})")
+                    try:
+                        recent_entries = self.on_get_recent_entries(recent_entry_ids)
                         
-                        # Show recent entries
-                        self.show_recent_entries(recent_entries)
-                        return
-                    else:
-                        logger.debug("No entries returned from on_get_recent_entries")
-                        logger.debug(f"Entry IDs that were searched for: {recent_entry_ids}")
+                        if recent_entries:
+                            logger.debug(f"Found {len(recent_entries)} recent entries")
+                            # Log entry titles for debugging
+                            for i, entry in enumerate(recent_entries):
+                                logger.debug(f"  Entry {i+1}: {entry.title} (UUID: {entry.uuid})")
+                            
+                            # Show recent entries
+                            self.show_recent_entries(recent_entries)
+                            return
+                        else:
+                            logger.debug("No entries returned from on_get_recent_entries")
+                            logger.debug(f"Entry IDs that were searched for: {recent_entry_ids}")
+                    except Exception as db_error:
+                        logger.error(f"Error retrieving entries from database: {db_error}")
+                        logger.debug("Falling back to showing search input")
                 else:
                     logger.debug("No recent entry IDs found for current window")
             else:
@@ -90,8 +94,8 @@ class StateHandler:
             import traceback
             logger.error(traceback.format_exc())
         
-        # No recent entries, just show search
-        logger.debug("No recent entries to show, showing search input")
+        # No recent entries or error occurred, just show search
+        logger.debug("No recent entries to show or error occurred, showing search input")
         
         # Make sure we don't show entries from previous windows
         # This is handled in SearchWindow._handle_reset, but we'll also do it here for safety

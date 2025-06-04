@@ -222,7 +222,7 @@ class SearchWindow:
             return
             
         current_time = time.time()
-        # Show the window first
+        # Show the window only after successful database connection
         self.window.show()
         
         # Get current state
