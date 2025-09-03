@@ -33,9 +33,13 @@ You need a multi-clipboard tool to access the last two entries.
     ```
 
 3. Customize other settings as needed:
-    - `search_reset_timeout`: Timeout in seconds before resetting the search window
-    - `database_idle_timeout`: Timeout in seconds before locking the database
-    - `search_hotkey`: Hotkey combination to open the search window
+    - `search_reset_timeout`: Timeout in seconds before resetting the search window (default: 180)
+    - `database_idle_timeout`: Timeout in seconds before locking the database (default: 3600)
+    - `search_hotkey`: Hotkey combination to open the search window (default: alt+shift+F8)
+    - `window_position`: Window positioning mode - 'mouse', 'center', or 'center_screen' (default: mouse)
+    - `paste_mode`: Use clipboard paste (Ctrl+V) instead of typing (default: true)
+        - When `true`: Credentials are pasted using Ctrl+V (more reliable with special characters)
+        - When `false`: Credentials are typed character by character (automatically uses paste for passwords containing `^` to avoid dead key issues)
 
 ## Dependencies
 

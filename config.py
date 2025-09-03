@@ -23,7 +23,8 @@ class Config:
             'database_idle_timeout': '3600',  # 1 hour in seconds
             'database_path': 'Database.kdbx',  # Default database path
             'debug_mode': 'false',  # Debug mode disabled by default
-            'window_position': 'mouse'  # Window position mode: 'mouse', 'center', or 'center_screen'
+            'window_position': 'mouse',  # Window position mode: 'mouse', 'center', or 'center_screen'
+            'paste_mode': 'true'  # Use paste instead of typing (avoids dead key issues)
         }
         self.config['Hotkeys'] = {
             'search_hotkey': 'alt + shift + F8'
@@ -84,6 +85,14 @@ class Config:
             return 'mouse'  # Default if invalid value
         except (configparser.NoSectionError, configparser.NoOptionError):
             return 'mouse'  # Default: position at mouse cursor
+            
+    def get_paste_mode(self) -> bool:
+        """Get paste mode from config - when true, use clipboard paste instead of typing"""
+        try:
+            paste_mode = self.config.get('General', 'paste_mode').lower()
+            return paste_mode in ('true', 'yes', '1', 'on')
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return True  # Default: paste mode enabled (avoids dead key issues)
 
 # Create a singleton instance
 config = Config()

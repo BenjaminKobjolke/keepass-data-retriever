@@ -6,6 +6,7 @@ from pynput.keyboard import Controller
 from .dark_button import DarkButton
 from .state_manager import StateManager, AppState
 from .logger import Logger
+from config import config
 import pyautogui
 
 # Get logger instance
@@ -71,6 +72,10 @@ class ActionButtons:
 
     def _create_buttons(self, entry=None):
         """Create action buttons"""
+        # Determine whether to use "Type" or "Paste" based on paste_mode setting
+        paste_mode = config.get_paste_mode()
+        action_verb = "Paste" if paste_mode else "Type"
+        
         # Start with Auto type as the first action
         actions = [
             ("Auto type (1)", "auto_type")
@@ -80,8 +85,8 @@ class ActionButtons:
         actions += [
             ("Copy username (2)", "username"),
             ("Copy password (3)", "password"),
-            ("Type username (4)", "type_username"),
-            ("Type password (5)", "type_password")
+            (f"{action_verb} username (4)", "type_username"),
+            (f"{action_verb} password (5)", "type_password")
         ]
 
         if entry and entry.url:
