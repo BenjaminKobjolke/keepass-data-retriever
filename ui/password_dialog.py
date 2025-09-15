@@ -62,18 +62,32 @@ class PasswordDialog:
         self.root.bind('<Escape>', lambda e: self._on_cancel())
         
         # Center the window
-        self.root.update_idletasks()
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.root.winfo_screenheight() // 2) - (height // 2)
-        self.root.geometry(f'{width}x{height}+{x}+{y}')
+        self._center_window()
         
         # Show window now that it's configured
         self.root.deiconify()
         
         # Focus the entry
         self.entry.focus_force()
+
+    def _center_window(self):
+        """Center the window on the current screen"""
+        self.root.update_idletasks()
+
+        # Get window dimensions
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+
+        # Get current screen dimensions (this will reflect any resolution changes)
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Calculate center position
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+
+        # Apply the geometry
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
 
     def _configure_styles(self):
         """Configure ttk styles for dark theme"""
@@ -101,6 +115,8 @@ class PasswordDialog:
     def get_password(self):
         """Show dialog and return password"""
         try:
+            # Re-center window right before showing in case resolution changed
+            self._center_window()
             self.root.mainloop()
         except Exception as e:
             print(f"Dialog error: {e}")
