@@ -131,6 +131,12 @@ class SearchView(BaseView):
                 if search_term.lower() == '/exit':
                     self.parent.quit()
                     return "break"
+
+                # Check for reload command
+                if search_term.lower() == '/reload':
+                    if hasattr(self.parent, '_handle_reload') and self.parent._handle_reload:
+                        self.parent._handle_reload()
+                    return "break"
                 
                 logger.debug(f"New search from SearchView: {search_term}")
                 self.search_term = search_term

@@ -84,7 +84,8 @@ class SearchWindow:
             self._handle_delete_recent_entry, # Callback for delete key
             self.show_initial_view,
             self.state_manager,  # Pass the state manager to InputManager
-            self._handle_exit    # Pass the exit handler
+            self._handle_exit,   # Pass the exit handler
+            self._handle_reload  # Pass the reload handler
         )
         
         # Initialize results view
@@ -489,6 +490,15 @@ class SearchWindow:
         logger.info("Exit command detected, closing application")
         if self.root:
             self.root.quit()
+
+    def _handle_reload(self):
+        """Handle reload command"""
+        logger.info("Reload command detected")
+        # Check if we have a reload handler set from main.py
+        if hasattr(self, 'reload_handler') and self.reload_handler:
+            self.reload_handler()
+        else:
+            logger.warning("No reload handler configured")
             
     def run(self):
         """Start the application"""
@@ -496,4 +506,5 @@ class SearchWindow:
         logger.info(f"KeePass Search running. Press {hotkey} to open search window.")
         logger.info("Right-click the window for menu options.")
         logger.info("Type /exit in any search box to exit the application.")
+        logger.info("Type /reload in any search box to reload the database.")
         self.root.mainloop()

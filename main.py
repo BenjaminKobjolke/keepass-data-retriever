@@ -285,6 +285,51 @@ class KeePassRetriever:
             return self.connect_database()
         return True  # Already connected
 
+    def get_password_for_reload(self):
+        """Get password for reload - always show dialog"""
+        dialog = PasswordDialog()
+        return dialog.get_password()
+
+    def _do_reload(self):
+        """Perform the actual reload operation"""
+        try:
+            # Get database path
+            db_path = self.get_database_path()
+            if not os.path.exists(db_path):
+                print(f"Error: Database file not found: {db_path}")
+                return False
+
+            # Always prompt for password on reload
+            password = self.get_password_for_reload()
+            if not password:  # User cancelled the dialog
+                print("Password input cancelled")
+                return False
+
+            self.kp = PyKeePass(db_path, password)
+            self.is_locked = False
+            print("Database reloaded successfully")
+
+            # Transition back to INITIAL state if window exists
+            if self.window and hasattr(self.window, 'state_manager'):
+                self.window.state_manager.transition_to(AppState.INITIAL)
+            return True
+        except Exception as e:
+            print(f"Error reloading database: {e}")
+            return False
+
+    def reload_database(self):
+        """Reload the KeePass database"""
+        print("\nReloading database...")
+        # Clear current database connection
+        self.kp = None
+        self.is_locked = False
+
+        # Schedule the dialog to show after current event processing completes
+        if self.window and self.window.root:
+            self.window.root.after(100, self._do_reload)
+        else:
+            self._do_reload()
+
     def exit_application(self):
         """Exit the application"""
         print("\nExiting application...")
@@ -304,6 +349,9 @@ class KeePassRetriever:
             
             # Override the exit handler to use our method
             self.window._handle_exit = self.exit_application
+
+            # Set the reload handler
+            self.window.reload_handler = self.reload_database
             
             # Start idle time checking
             self.check_idle_time()
@@ -313,6 +361,7 @@ class KeePassRetriever:
             print("Right-click the window for menu options.")
             print(f"Database will lock after {self.idle_timeout} seconds of inactivity.")
             print("Type /exit in any search box to exit the application.")
+            print("Type /reload in any search box to reload the database.")
             
             self.window.run()
 

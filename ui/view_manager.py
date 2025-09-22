@@ -9,13 +9,14 @@ logger = Logger.get_instance()
 class ViewManager:
     """Manages view lifecycle and transitions"""
     
-    def __init__(self, parent: tk.Widget, state_manager: StateManager):
+    def __init__(self, parent: tk.Widget, state_manager: StateManager, handle_reload=None):
         self.parent = parent
         self.state_manager = state_manager
         self.views: Dict[str, BaseView] = {}
         self.active_view: Optional[BaseView] = None
         self.view_classes: Dict[str, Type[BaseView]] = {}
-        
+        self._handle_reload = handle_reload
+
         # Register as state listener
         self.state_manager.register_listener(self)
     

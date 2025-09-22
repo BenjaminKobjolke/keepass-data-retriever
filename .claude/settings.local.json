@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(dir)",
+      "Bash(activate_environment.bat)"
     ],
     "deny": []
   }

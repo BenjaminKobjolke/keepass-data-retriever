@@ -13,6 +13,11 @@ Recent entries for the active window are displayed with a slightly different bac
 The username and password of the matching KeePass entry will be copied to the clipboard.
 You need a multi-clipboard tool to access the last two entries.
 
+### Special Commands
+
+- **`/exit`**: Exit the application
+- **`/reload`**: Reload the KeePass database from disk (useful after making changes in KeePass)
+
 ## Configuration
 
 1. Copy `settings_example.ini` to `settings.ini`:

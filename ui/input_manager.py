@@ -14,12 +14,12 @@ class InputMode(Enum):
     ACTION = auto()
 
 class InputManager:
-    def __init__(self, parent: ttk.Frame, on_search: Callable, on_select: Callable, 
-                 on_action: Callable, on_escape: Callable, on_reset: Callable, 
+    def __init__(self, parent: ttk.Frame, on_search: Callable, on_select: Callable,
+                 on_action: Callable, on_escape: Callable, on_reset: Callable,
                  entry_class: Type[ttk.Entry], on_enter_action: Callable = None,
                  on_highlight_change: Callable = None, on_action_highlight_change: Callable = None, on_delete_entry: Callable = None,
                  on_show_initial_view: Callable = None, state_manager: StateManager = None,
-                 on_exit: Callable = None):
+                 on_exit: Callable = None, on_reload: Callable = None):
         self.on_search = on_search
         self.on_select = on_select
         self.on_action = on_action
@@ -32,6 +32,7 @@ class InputManager:
         self.state_manager = state_manager
         self.on_delete_entry = on_delete_entry
         self.on_exit = on_exit  # Callback for exiting the application
+        self.on_reload = on_reload  # Callback for reloading the database
         
         # Create input frame to position all inputs
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
@@ -113,6 +114,13 @@ class InputManager:
             logger.info("Exit command detected")
             self.on_exit()
             return "break"
+
+        # Check for reload command
+        if search_term == "/reload" and self.on_reload:
+            logger.info("Reload command detected")
+            self.search_input.delete(0, tk.END)  # Clear the input field
+            self.on_reload()
+            return "break"
             
         # If we have entries and a current entry is selected, select it
         if self.entries and self.current_entry:
@@ -165,6 +173,12 @@ class InputManager:
             logger.info("Exit command detected")
             self.on_exit()
             return "break"
+
+        # Check for reload command
+        if self.list_input.get() == "/reload" and self.on_reload:
+            logger.info("Reload command detected")
+            self.on_reload()
+            return "break"
             
         # Handle Backspace key to go back to main GUI
         if event.keysym == 'BackSpace':
@@ -215,6 +229,12 @@ class InputManager:
         if self.action_input.get() == "/exit" and self.on_exit:
             logger.info("Exit command detected")
             self.on_exit()
+            return "break"
+
+        # Check for reload command
+        if self.action_input.get() == "/reload" and self.on_reload:
+            logger.info("Reload command detected")
+            self.on_reload()
             return "break"
             
         # Handle Backspace key to go back to main GUI

@@ -110,6 +110,12 @@ class InitialView(BaseView):
             if search_term.lower() == '/exit':
                 self.view_manager.parent.quit()
                 return "break"
+
+            # Check for reload command
+            if search_term.lower() == '/reload':
+                if hasattr(self.view_manager, '_handle_reload') and self.view_manager._handle_reload:
+                    self.view_manager._handle_reload()
+                return "break"
             
             logger.debug(f"Search initiated: {search_term}")
             # Transition to search state
