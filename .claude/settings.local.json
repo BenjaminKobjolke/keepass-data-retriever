@@ -4,7 +4,9 @@
       "Bash(python:*)",
       "Bash(cp:*)",
       "Bash(dir)",
-      "Bash(activate_environment.bat)"
+      "Bash(activate_environment.bat)",
+      "Bash(git log:*)",
+      "Bash(del:*)"
     ],
     "deny": []
   }

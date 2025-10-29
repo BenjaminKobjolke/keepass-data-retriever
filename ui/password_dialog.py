@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+import win32api
+import win32con
 from .dark_entry import DarkEntry
 from .dark_button import DarkButton
 from .window_manager import WindowManager
@@ -71,20 +73,23 @@ class PasswordDialog:
         self.entry.focus_force()
 
     def _center_window(self):
-        """Center the window on the current screen"""
+        """Center the window on the current screen with bounds validation"""
         self.root.update_idletasks()
 
         # Get window dimensions
         width = self.root.winfo_width()
         height = self.root.winfo_height()
 
-        # Get current screen dimensions (this will reflect any resolution changes)
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
+        # Get current screen dimensions using win32api (more reliable than tkinter after resolution changes)
+        screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
+        screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
 
         # Calculate center position
         x = (screen_width // 2) - (width // 2)
         y = (screen_height // 2) - (height // 2)
+
+        # Validate position to ensure window is visible on screen
+        x, y = WindowManager.validate_window_position(x, y, width, height)
 
         # Apply the geometry
         self.root.geometry(f'{width}x{height}+{x}+{y}')

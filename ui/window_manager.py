@@ -21,11 +21,46 @@ class WindowManager:
     BUTTON_BG = '#3d3d3d'  # Even lighter for buttons
     BUTTON_FG = '#ffffff'  # White text for buttons
     TRANSPARENCY = 0.9
-    
+
     # Window sizes (adjusted for wider input)
-    WINDOW_WIDTH = 420 
+    WINDOW_WIDTH = 420
     WINDOW_HEIGHT_NORMAL = 91
     WINDOW_HEIGHT_EXPANDED = 520
+
+    @staticmethod
+    def validate_window_position(x: int, y: int, width: int, height: int) -> tuple[int, int]:
+        """
+        Validate and clamp window position to ensure it's visible on screen.
+
+        Args:
+            x: Window x position
+            y: Window y position
+            width: Window width
+            height: Window height
+
+        Returns:
+            Tuple of (validated_x, validated_y) coordinates
+        """
+        try:
+            # Get screen dimensions using win32api (more reliable than tkinter)
+            screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
+            screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+
+            # Clamp x to ensure window is visible horizontally
+            # Left edge: ensure x >= 0
+            # Right edge: ensure x + width <= screen_width
+            validated_x = max(0, min(x, screen_width - width))
+
+            # Clamp y to ensure window is visible vertically
+            # Top edge: ensure y >= 0
+            # Bottom edge: ensure y + height <= screen_height
+            validated_y = max(0, min(y, screen_height - height))
+
+            return (validated_x, validated_y)
+        except Exception as e:
+            print(f"Error validating window position: {e}")
+            # Return original coordinates if validation fails
+            return (x, y)
 
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -113,14 +148,17 @@ class WindowManager:
             # Get screen dimensions
             screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
             screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
-            
+
             # Calculate center position
             window_width = self.WINDOW_WIDTH
             window_height = self.WINDOW_HEIGHT_EXPANDED if self.window_expanded else self.WINDOW_HEIGHT_NORMAL
-            
+
             center_x = (screen_width - window_width) // 2
             center_y = (screen_height - window_height) // 2
-            
+
+            # Validate position to ensure window is visible on screen
+            center_x, center_y = self.validate_window_position(center_x, center_y, window_width, window_height)
+
             # Set window position
             self.root.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
         except Exception as e:
@@ -147,37 +185,45 @@ class WindowManager:
         """Position window near mouse cursor"""
         mouse_x = self.root.winfo_pointerx()
         mouse_y = self.root.winfo_pointery()
-        
+
         offset_x = 20
         offset_y = 20
-        
-        if self.window_expanded:
-            self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT_EXPANDED}+{mouse_x + offset_x}+{mouse_y + offset_y}")
-        else:
-            self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT_NORMAL}+{mouse_x + offset_x}+{mouse_y + offset_y}")
+
+        # Calculate initial position
+        x = mouse_x + offset_x
+        y = mouse_y + offset_y
+
+        # Determine window dimensions
+        window_width = self.WINDOW_WIDTH
+        window_height = self.WINDOW_HEIGHT_EXPANDED if self.window_expanded else self.WINDOW_HEIGHT_NORMAL
+
+        # Validate position to ensure window is visible on screen
+        x, y = self.validate_window_position(x, y, window_width, window_height)
+
+        # Set window position
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
     
     def _position_window_center(self):
         """Position window in center of active window"""
         try:
             # Get active window handle
             active_hwnd = win32gui.GetForegroundWindow()
-            
+
             # Get active window rect
             left, top, right, bottom = win32gui.GetWindowRect(active_hwnd)
             active_width = right - left
             active_height = bottom - top
-            
+
             # Calculate center position
             window_width = self.WINDOW_WIDTH
             window_height = self.WINDOW_HEIGHT_EXPANDED if self.window_expanded else self.WINDOW_HEIGHT_NORMAL
-            
+
             center_x = left + (active_width - window_width) // 2
             center_y = top + (active_height - window_height) // 2
-            
-            # Ensure window is visible on screen
-            center_x = max(0, center_x)
-            center_y = max(0, center_y)
-            
+
+            # Validate position to ensure window is visible on screen (all edges)
+            center_x, center_y = self.validate_window_position(center_x, center_y, window_width, window_height)
+
             # Set window position
             self.root.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
         except Exception as e:
