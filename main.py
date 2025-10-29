@@ -8,6 +8,9 @@ import pyperclip
 import time
 import win32api
 import win32con
+import win32event
+import winerror
+from tkinter import messagebox
 from ui.search_window import SearchWindow
 from ui.password_dialog import PasswordDialog
 from ui.state_manager import AppState
@@ -15,11 +18,30 @@ from config import config
 
 class KeePassRetriever:
     def __init__(self):
+        # Single instance check - must be first
+        self.mutex = None
+        if not self._ensure_single_instance():
+            messagebox.showerror(
+                "Already Running",
+                "KeePass Data Retriever is already running."
+            )
+            sys.exit(0)
+
         self.kp = None
         self.window = None
         self.last_activity_time = time.time()
         self.idle_timeout = config.get_database_idle_timeout()
         self.is_locked = False
+
+    def _ensure_single_instance(self):
+        """Ensure only one instance of the application is running using a named mutex."""
+        mutex_name = "Global\\KeePassDataRetrieverMutex"
+        self.mutex = win32event.CreateMutex(None, False, mutex_name)
+        last_error = win32api.GetLastError()
+
+        if last_error == winerror.ERROR_ALREADY_EXISTS:
+            return False
+        return True
 
     def get_database_path(self):
         """Get database path from settings, command line, environment, or default"""
@@ -333,6 +355,11 @@ class KeePassRetriever:
     def exit_application(self):
         """Exit the application"""
         print("\nExiting application...")
+
+        # Release mutex
+        if self.mutex:
+            win32api.CloseHandle(self.mutex)
+
         sys.exit(0)
         
     def run(self):
