@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from .url_formatter import shorten_url
 
 class StatusDisplay:
     def __init__(self, parent: ttk.Frame):
@@ -21,7 +22,7 @@ class StatusDisplay:
         if single_entry:
             text = f"{single_entry.title}"
             if single_entry.url:
-                text += f"\nURL: {single_entry.url}"
+                text += f"\nURL: {shorten_url(single_entry.url)}"
             self.set_text(text)
         else:
             self.set_text(f"Found {len(entries)} entries. Press 1-{len(entries)} to select.")
@@ -30,7 +31,7 @@ class StatusDisplay:
         """Show selected entry status"""
         text = f"Selected: {entry.title}"
         if entry.url:
-            text += f"\nURL: {entry.url}"
+            text += f"\nURL: {shorten_url(entry.url)}"
         self.set_text(text)
 
     def set_text(self, text: str):

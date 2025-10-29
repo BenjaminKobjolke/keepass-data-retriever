@@ -3,6 +3,7 @@ from tkinter import ttk
 from typing import List, Any, Dict, Optional
 from .state_manager import StateManager, AppState
 from .logger import Logger
+from .url_formatter import shorten_url
 
 # Get logger instance
 logger = Logger.get_instance()
@@ -154,7 +155,7 @@ class ResultsView:
             if entry.url:
                 url_label = ttk.Label(
                     entry_frame,
-                    text=f"   {entry.url}",
+                    text=f"   {shorten_url(entry.url)}",
                     wraplength=360,  # Increased for larger window
                     style=base_url_label_style,
                     font=('Segoe UI', 10)  # Slightly smaller for URL
