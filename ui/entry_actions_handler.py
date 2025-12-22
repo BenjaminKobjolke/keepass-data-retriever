@@ -71,10 +71,10 @@ class EntryActionsHandler:
             self.actions.hide()
             self.actions = None
             
-        # Use the singleton pattern to get or create action buttons
-        self.actions = ActionButtons.get_instance(
-            self.main_frame, 
-            lambda action: self.handle_action(action, entry), 
+        # Create action buttons for the selected entry
+        self.actions = ActionButtons(
+            self.main_frame,
+            lambda action: self.handle_action(action, entry),
             entry,
             self.state_manager
         )

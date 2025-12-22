@@ -6,6 +6,8 @@ from pynput.keyboard import Controller
 from .dark_button import DarkButton
 from .state_manager import StateManager, AppState
 from .logger import Logger
+from .theme_manager import ThemeManager
+from .action_registry import ActionRegistry
 from config import config
 import pyautogui
 
@@ -13,25 +15,14 @@ import pyautogui
 logger = Logger.get_instance()
 
 class ActionButtons:
-    # Define colors for highlighting
-    HIGHLIGHT_BG = '#5a5a5a'  # Much lighter than background for better visibility
-    NORMAL_BG = '#3d3d3d'     # Default button background
-    
-    # Class variable to track instances
-    _instance = None
-    
-    @classmethod
-    def get_instance(cls, parent: ttk.Frame, on_action: Callable, entry=None, state_manager: StateManager = None):
-        """Get or create an instance of ActionButtons"""
-        if cls._instance is None:
-            cls._instance = ActionButtons(parent, on_action, entry, state_manager)
-        else:
-            # Update existing instance
-            cls._instance.on_action = on_action
-            cls._instance.current_entry = entry
-            cls._instance._create_buttons(entry)
-        return cls._instance
-    
+    @property
+    def HIGHLIGHT_BG(self):
+        return ThemeManager.get_color('action_highlight_bg')
+
+    @property
+    def NORMAL_BG(self):
+        return ThemeManager.get_color('button_bg')
+
     def __init__(self, parent: ttk.Frame, on_action: Callable, entry=None, state_manager: StateManager = None):
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
         self.on_action = on_action
@@ -49,14 +40,6 @@ class ActionButtons:
     
     def on_state_changed(self, state: AppState, data: Dict[str, Any]) -> None:
         """Handle state changes"""
-        # Only respond to state changes if this is the current instance
-        if self != ActionButtons._instance and ActionButtons._instance is not None:
-            # This is not the current instance, unregister from state manager
-            if self.state_manager:
-                logger.debug("Unregistering old ActionButtons instance from state manager")
-                self.state_manager.unregister_listener(self)
-            return
-            
         logger.debug(f"ActionButtons: State changed to {state}")
         
         if state == AppState.ENTRY_ACTIONS:
@@ -72,38 +55,29 @@ class ActionButtons:
 
     def _create_buttons(self, entry=None):
         """Create action buttons"""
-        # Determine whether to use "Type" or "Paste" based on paste_mode setting
-        paste_mode = config.get_paste_mode()
-        action_verb = "Paste" if paste_mode else "Type"
-        
-        # Start with Auto type as the first action
-        actions = [
-            ("Auto type (1)", "auto_type")
-        ]
-        
-        # Add other actions with updated numbering
-        actions += [
-            ("Copy username (2)", "username"),
-            ("Copy password (3)", "password"),
-            (f"{action_verb} username (4)", "type_username"),
-            (f"{action_verb} password (5)", "type_password")
-        ]
+        # Destroy any existing buttons
+        for child in self.frame.winfo_children():
+            child.destroy()
 
-        if entry and entry.url:
-            actions.append(("Copy URL (6)", "url"))
-            actions.append(("Open URL (7)", "open_url"))
-        
+        # Get paste mode setting
+        paste_mode = config.get_paste_mode()
+
+        # Get available actions based on whether entry has URL
+        has_url = entry and entry.url
+        actions = ActionRegistry.get_all_actions(has_url=has_url)
+
         self.buttons = []  # Clear buttons list
-        
-        for i, (text, action) in enumerate(actions):
+
+        for i, action_def in enumerate(actions):
+            label = ActionRegistry.get_label(action_def['id'], paste_mode=paste_mode)
             btn = DarkButton(
                 self.frame,
-                text=text,
-                command=lambda a=action: self._handle_action(a),
+                text=label,
+                command=lambda a=action_def['id']: self._handle_action(a),
                 width=30  # Make buttons wider
             )
             btn.pack(fill=tk.X, pady=2)  # Slightly more vertical spacing
-            self.buttons.append({"button": btn, "action": action, "index": i})
+            self.buttons.append({"button": btn, "action": action_def['id'], "index": i})
 
     def _handle_action(self, action: str):
         """Handle button actions"""
@@ -190,10 +164,7 @@ class ActionButtons:
         self.frame.pack_forget()
         # Reset highlight when hiding
         self.current_highlight = -1
-        
+
         # Unregister from state manager
         if self.state_manager:
             self.state_manager.unregister_listener(self)
-            
-        # Clear the class instance reference
-        ActionButtons._instance = None
