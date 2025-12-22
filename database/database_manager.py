@@ -2,6 +2,7 @@
 
 import os
 import sys
+from typing import Tuple, Optional, Callable
 from pykeepass import PyKeePass
 from config import config
 from services.password_provider import PasswordProvider
@@ -43,6 +44,33 @@ class DatabaseManager:
         # Use default
         return 'Database.kdbx'
 
+    def create_password_validator(self) -> Callable[[str], Tuple[bool, Optional[str]]]:
+        """
+        Create a password validation callback for the password dialog.
+
+        Returns:
+            callable: Validator function (password) -> (success, error_msg)
+        """
+        db_path = self.get_database_path()
+
+        def validate_password(password: str) -> Tuple[bool, Optional[str]]:
+            """Validate password against the database."""
+            try:
+                # Attempt to open database with provided password
+                kp = PyKeePass(db_path, password)
+                # Success - store the connection
+                self.kp = kp
+                self.is_locked = False
+                return (True, None)
+            except Exception as e:
+                error_str = str(e).lower()
+                if 'password' in error_str or 'credentials' in error_str or 'decrypt' in error_str or 'invalid' in error_str:
+                    return (False, "Incorrect password. Please try again.")
+                else:
+                    return (False, f"Database error: {str(e)}")
+
+        return validate_password
+
     def connect_database(self):
         """
         Connect to KeePass database.
@@ -57,13 +85,15 @@ class DatabaseManager:
                 print("Configure database_path in settings.ini, use --database argument, or set KEEPASS_DATABASE environment variable")
                 return False
 
-            password = PasswordProvider.get_password()
+            # Create validator and get password with inline validation
+            validator = self.create_password_validator()
+            password = PasswordProvider.get_password_with_validation(validator)
+
             if not password:  # User cancelled the dialog
                 print("Password input cancelled")
                 return False
 
-            self.kp = PyKeePass(db_path, password)
-            self.is_locked = False
+            # Connection already established by validator
             print(f"Successfully connected to KeePass database: {db_path}")
             return True
         except Exception as e:
@@ -95,14 +125,15 @@ class DatabaseManager:
                 print(f"Error: Database file not found: {db_path}")
                 return False
 
-            # Always prompt for password on reload
-            password = PasswordProvider.get_password_for_reload()
+            # Create validator and prompt for password with validation
+            validator = self.create_password_validator()
+            password = PasswordProvider.get_password_for_reload_with_validation(validator)
+
             if not password:  # User cancelled the dialog
                 print("Password input cancelled")
                 return False
 
-            self.kp = PyKeePass(db_path, password)
-            self.is_locked = False
+            # Connection already established by validator
             print("Database reloaded successfully")
 
             # Transition back to INITIAL state if state manager exists

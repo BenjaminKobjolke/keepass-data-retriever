@@ -29,6 +29,20 @@ class Config:
         self.config['Hotkeys'] = {
             'search_hotkey': 'alt + shift + F8'
         }
+        self.config['Theme'] = {
+            'preset': 'dark',  # 'dark', 'light', or 'custom'
+            'bg_color': '#1e1e1e',
+            'fg_color': '#ffffff',
+            'entry_bg': '#2d2d2d',
+            'entry_fg': '#ffffff',
+            'button_bg': '#3d3d3d',
+            'button_fg': '#ffffff',
+            'highlight_bg': '#2E2E2E',
+            'recent_entry_bg': '#063970',
+            'action_highlight_bg': '#5a5a5a',
+            'button_hover_bg': '#4d4d4d',
+            'transparency': '0.9'
+        }
         
         # Read from file if it exists
         if os.path.exists(self.config_path):
@@ -93,6 +107,79 @@ class Config:
             return paste_mode in ('true', 'yes', '1', 'on')
         except (configparser.NoSectionError, configparser.NoOptionError):
             return True  # Default: paste mode enabled (avoids dead key issues)
+
+    def get_theme_preset(self) -> str:
+        """Get current theme preset name"""
+        try:
+            return self.config.get('Theme', 'preset').lower()
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return 'dark'
+
+    def set_theme_preset(self, preset: str) -> None:
+        """Set theme preset"""
+        if 'Theme' not in self.config:
+            self.config['Theme'] = {}
+        self.config['Theme']['preset'] = preset
+
+    def get_theme_color(self, color_name: str) -> str:
+        """Get a theme color by name"""
+        defaults = {
+            'bg_color': '#1e1e1e',
+            'fg_color': '#ffffff',
+            'entry_bg': '#2d2d2d',
+            'entry_fg': '#ffffff',
+            'button_bg': '#3d3d3d',
+            'button_fg': '#ffffff',
+            'highlight_bg': '#2E2E2E',
+            'recent_entry_bg': '#063970',
+            'action_highlight_bg': '#5a5a5a',
+            'button_hover_bg': '#4d4d4d',
+        }
+        try:
+            return self.config.get('Theme', color_name)
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return defaults.get(color_name, '#1e1e1e')
+
+    def set_theme_color(self, color_name: str, value: str) -> None:
+        """Set a theme color"""
+        if 'Theme' not in self.config:
+            self.config['Theme'] = {}
+        self.config['Theme'][color_name] = value
+
+    def get_theme_transparency(self) -> float:
+        """Get theme transparency value"""
+        try:
+            return float(self.config.get('Theme', 'transparency'))
+        except (configparser.NoSectionError, configparser.NoOptionError, ValueError):
+            return 0.9
+
+    def set_theme_transparency(self, value: float) -> None:
+        """Set theme transparency value"""
+        if 'Theme' not in self.config:
+            self.config['Theme'] = {}
+        self.config['Theme']['transparency'] = str(value)
+
+    def get_all_theme_colors(self) -> dict:
+        """Get all theme colors as a dictionary"""
+        color_names = [
+            'bg_color', 'fg_color', 'entry_bg', 'entry_fg',
+            'button_bg', 'button_fg', 'highlight_bg', 'recent_entry_bg',
+            'action_highlight_bg', 'button_hover_bg'
+        ]
+        return {name: self.get_theme_color(name) for name in color_names}
+
+    def set_all_theme_colors(self, colors: dict) -> None:
+        """Set all theme colors from a dictionary"""
+        for name, value in colors.items():
+            self.set_theme_color(name, value)
+
+    def save_config(self) -> None:
+        """Save configuration to settings.ini"""
+        try:
+            with open(self.config_path, 'w') as configfile:
+                self.config.write(configfile)
+        except Exception as e:
+            print(f"Error saving config file: {e}")
 
 # Create a singleton instance
 config = Config()
