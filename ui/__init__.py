@@ -4,7 +4,7 @@ from .action_buttons import ActionButtons
 from .hotkey_manager import HotkeyManager
 from .window_manager import WindowManager
 from .status_display import StatusDisplay
-from .input_manager import InputManager
+from .input import InputManager
 from .dark_entry import DarkEntry
 from .dark_button import DarkButton
 
