@@ -11,20 +11,17 @@ KeePass Data Retriever is a Windows desktop application that provides quick KeeP
 ### Core Components
 - `main.py`: Entry point and main KeePassRetriever class that manages database connection and application lifecycle
 - `config.py`: Configuration management using INI files with default fallbacks
-- `ui/`: UI components organized in a modular view-based architecture
-  - `search_window.py`: Main application window using ViewManager for orchestration
-  - `base_view.py`: Abstract base class for all views
-  - `view_manager.py`: Centralized view controller that manages view transitions
-  - `views/`: Modular view implementations
-    - `initial_view.py`: Welcome state with recent entries
-    - `search_view.py`: Active search input with live results
-    - `results_list_view.py`: Multiple search results navigation
-    - `entry_details_view.py`: Selected entry with action buttons
+- `ui/`: UI components
+  - `search_window.py`: Main application window coordinator
+  - `input/`: Input handling module
+    - `input_manager.py`: Manages input fields and keyboard handling for different modes
+    - `command_handler.py`: Handles /exit, /reload, /settings commands
   - `password_dialog.py`: Password entry dialog for database unlock
   - `state_manager.py`: Application state management (AppState enum)
   - `keyboard_handler.py`: Handles credential typing/pasting with special character support
   - `entry_actions_handler.py`: Manages actions for selected KeePass entries
   - `action_buttons.py`: Dynamic action buttons that adapt text based on paste_mode setting
+  - `mode_indicator.py`: Visual indicator showing current app mode (RECENT/SEARCH/RESULTS/ACTIONS)
   - Window management: `window_manager.py`, `window_relations_manager.py`
   - UI components: `results_view.py`, `status_display.py`, `dark_entry.py`
 
@@ -101,26 +98,12 @@ search_hotkey = alt + shift + F8
 
 ## UI State Management
 
-The application uses a centralized state system with modular views:
-- `AppState` enum defines application states (INITIAL, SEARCH, RESULTS_LIST, ENTRY_ACTIONS, etc.)
+The application uses a centralized state system:
+- `AppState` enum defines application states (INITIAL, SEARCH, RESULTS_LIST, ENTRY_ACTIONS, HIDDEN)
 - `StateManager` handles state transitions and notifies listeners
-- `ViewManager` orchestrates view transitions based on state changes
-- Each view in `ui/views/` handles its own UI logic and responds to specific states
-- Views communicate through callbacks rather than direct coupling
-
-### View Architecture
-Each view extends `BaseView` and implements:
-- `get_supported_states()`: States this view can handle
-- `create_ui()`: UI element creation
-- `on_show(data)`: Called when view becomes active
-- `on_hide()`: Called when view is hidden
-- State-specific event handlers for user interaction
-
-This modular approach makes it easy to:
-- Add new views without modifying existing code
-- Test views in isolation
-- Maintain clear separation of concerns
-- Extend functionality through composition
+- Components register as state listeners and update their UI accordingly
+- `InputManager` updates the mode indicator based on current state
+- `SearchWindow` coordinates all UI components
 
 ## Keyboard Handler and Special Characters
 
