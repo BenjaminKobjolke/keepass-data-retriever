@@ -9,7 +9,7 @@ from .window_focus_manager import WindowFocusManager
 class WindowManager:
     # Window sizes (adjusted for wider input)
     WINDOW_WIDTH = 420
-    WINDOW_HEIGHT_NORMAL = 91
+    WINDOW_HEIGHT_NORMAL = 121  # Increased to fit mode indicator
     WINDOW_HEIGHT_EXPANDED = 520
 
     # Re-export theme colors for backward compatibility

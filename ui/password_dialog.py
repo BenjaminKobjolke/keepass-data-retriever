@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from typing import Callable, Tuple, Optional
 import win32api
 import win32con
 from .dark_entry import DarkEntry
@@ -7,9 +8,10 @@ from .dark_button import DarkButton
 from .window_manager import WindowManager
 
 class PasswordDialog:
-    def __init__(self, title="Enter KeePass Password"):
+    def __init__(self, title="Enter KeePass Password", validator: Callable[[str], Tuple[bool, Optional[str]]] = None):
         self.password = None
-        
+        self.validator = validator  # Callback: (password) -> (success: bool, error_msg: str|None)
+
         # Create dialog window
         self.root = tk.Tk()
         self.root.withdraw()  # Hide initially to prevent white flash
@@ -49,8 +51,22 @@ class PasswordDialog:
         
         # Add password entry
         self.entry = DarkEntry(self.frame, show="*")
-        self.entry.pack(fill=tk.X, pady=(0, 10))
-        
+        self.entry.pack(fill=tk.X, pady=(0, 5))
+
+        # Add error label (initially hidden)
+        self.error_label = tk.Label(
+            self.frame,
+            text="",
+            bg=WindowManager.BG_COLOR,
+            fg='#ff6b6b',  # Red error color matching dark theme
+            font=('Segoe UI', 10),
+            wraplength=280
+        )
+        # Don't pack yet - will be shown when error occurs
+
+        # Clear error when user starts typing
+        self.entry.bind('<Key>', lambda e: self._hide_error())
+
         # Add OK button using DarkButton
         self.button = DarkButton(
             self.frame,
@@ -106,16 +122,67 @@ class PasswordDialog:
         )
 
     def _on_ok(self):
-        """Handle OK button click"""
-        self.password = self.entry.get()
-        self.root.quit()
-        self.root.destroy()
+        """Handle OK button click with optional validation"""
+        password = self.entry.get()
+
+        if self.validator:
+            # Disable button and show "Checking..." state
+            self.button.configure(state='disabled', text='Checking...')
+            self.root.update()
+
+            try:
+                success, error_msg = self.validator(password)
+
+                if success:
+                    self.password = password
+                    self.root.quit()
+                    self.root.destroy()
+                else:
+                    # Show error and allow retry
+                    self._show_error(error_msg or "Invalid password")
+                    self.button.configure(state='normal', text='OK')
+                    self.entry.delete(0, tk.END)
+                    self.entry.focus_force()
+            except Exception as e:
+                self._show_error(f"Error: {str(e)}")
+                self.button.configure(state='normal', text='OK')
+                self.entry.delete(0, tk.END)
+                self.entry.focus_force()
+        else:
+            # No validator - just return password (backward compatibility)
+            self.password = password
+            self.root.quit()
+            self.root.destroy()
 
     def _on_cancel(self):
         """Handle cancel action"""
         self.password = None
         self.root.quit()
         self.root.destroy()
+
+    def _show_error(self, message: str):
+        """Show error message below password field"""
+        self.error_label.configure(text=message)
+        self.error_label.pack(pady=(0, 5))
+        # Flash the entry border red briefly
+        self.entry.configure(highlightbackground='#ff6b6b', highlightcolor='#ff6b6b')
+        self.root.after(2000, self._reset_entry_border)
+        # Re-center window to accommodate error label
+        self.root.update_idletasks()
+        self._center_window()
+
+    def _hide_error(self):
+        """Hide error message"""
+        if self.error_label.winfo_ismapped():
+            self.error_label.pack_forget()
+            self.error_label.configure(text="")
+
+    def _reset_entry_border(self):
+        """Reset entry border to default color"""
+        try:
+            self.entry.configure(highlightbackground='#1e1e1e', highlightcolor='#3d3d3d')
+        except tk.TclError:
+            pass  # Widget may have been destroyed
 
     def get_password(self):
         """Show dialog and return password"""
