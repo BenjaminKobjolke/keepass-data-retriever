@@ -1,13 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
 from .url_formatter import shorten_url
+from config import config
 
 class StatusDisplay:
     def __init__(self, parent: ttk.Frame):
+        wraplength = config.get_window_width() - 60
         self.label = ttk.Label(
             parent,
             text="",
-            wraplength=360,  # Increased for larger window
+            wraplength=wraplength,
             style='Dark.TLabel',
             font=('Segoe UI', 11)  # Larger font
         )

@@ -69,6 +69,8 @@ class ResultsDisplay:
         # Show the selected entry with action buttons
         self.entry_actions_handler.show_selected_entry(entry)
 
+        self.window_manager.auto_resize()
+
     def _show_multiple_entries(self, entries: List[Any], keep_search_mode: bool,
                                skip_state_transition: bool, is_recent_list: bool):
         """Show multiple entries in list view."""
@@ -97,6 +99,8 @@ class ResultsDisplay:
                 if entry:
                     self.input_manager.current_entry = entry
 
+        self.window_manager.auto_resize()
+
     def show_selected_entry(self, entry: Any, skip_state_transition: bool = False):
         """
         Display single selected entry with actions.
@@ -115,3 +119,5 @@ class ResultsDisplay:
 
         # Show the selected entry with action buttons
         self.entry_actions_handler.show_selected_entry(entry)
+
+        self.window_manager.auto_resize()

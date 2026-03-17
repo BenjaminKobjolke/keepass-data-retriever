@@ -24,7 +24,8 @@ class Config:
             'database_path': 'Database.kdbx',  # Default database path
             'debug_mode': 'false',  # Debug mode disabled by default
             'window_position': 'mouse',  # Window position mode: 'mouse', 'center', or 'center_screen'
-            'paste_mode': 'true'  # Use paste instead of typing (avoids dead key issues)
+            'paste_mode': 'true',  # Use paste instead of typing (avoids dead key issues)
+            'window_width': '500'  # Window width in pixels
         }
         self.config['Hotkeys'] = {
             'search_hotkey': 'alt + shift + F8'
@@ -107,6 +108,14 @@ class Config:
             return paste_mode in ('true', 'yes', '1', 'on')
         except (configparser.NoSectionError, configparser.NoOptionError):
             return True  # Default: paste mode enabled (avoids dead key issues)
+
+    def get_window_width(self) -> int:
+        """Get window width in pixels"""
+        try:
+            width = int(self.config.get('General', 'window_width'))
+            return max(350, min(width, 800))
+        except (configparser.NoSectionError, configparser.NoOptionError, ValueError):
+            return 500
 
     def get_theme_preset(self) -> str:
         """Get current theme preset name"""

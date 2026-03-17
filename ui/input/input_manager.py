@@ -11,6 +11,7 @@ from ..mode_indicator import ModeIndicator
 from ..action_registry import ActionRegistry
 from ..events import EventBus, Events
 from .command_handler import CommandHandler
+from config import config
 
 # Get logger instance
 logger = Logger.get_instance()
@@ -39,17 +40,19 @@ class InputManager:
         self.frame = ttk.Frame(parent, style='Dark.TFrame')
         self.frame.pack(padx=2, pady=2)
 
+        input_width = max(30, int(config.get_window_width() / 10.5))
+
         # Create search entry
-        self.search_input = entry_class(self.frame, width=40)
+        self.search_input = entry_class(self.frame, width=input_width)
         self.search_input.grid(row=0, column=0)
 
         # Create list selection input
-        self.list_input = entry_class(self.frame, width=40)
+        self.list_input = entry_class(self.frame, width=input_width)
         self.list_input.grid(row=0, column=0)
         self.list_input.grid_remove()  # Hide initially
 
         # Create action selection input
-        self.action_input = entry_class(self.frame, width=40)
+        self.action_input = entry_class(self.frame, width=input_width)
         self.action_input.grid(row=0, column=0)
         self.action_input.grid_remove()  # Hide initially
 

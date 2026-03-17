@@ -68,13 +68,15 @@ class ActionButtons:
 
         self.buttons = []  # Clear buttons list
 
+        button_width = max(20, int(config.get_window_width() / 14))
+
         for i, action_def in enumerate(actions):
             label = ActionRegistry.get_label(action_def['id'], paste_mode=paste_mode)
             btn = DarkButton(
                 self.frame,
                 text=label,
                 command=lambda a=action_def['id']: self._handle_action(a),
-                width=30  # Make buttons wider
+                width=button_width
             )
             btn.pack(fill=tk.X, pady=2)  # Slightly more vertical spacing
             self.buttons.append({"button": btn, "action": action_def['id'], "index": i})

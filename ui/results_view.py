@@ -6,6 +6,7 @@ from .logger import Logger
 from .url_formatter import shorten_url
 from .theme_manager import ThemeManager
 from .constants import Fonts, Styles
+from config import config
 
 # Get logger instance
 logger = Logger.get_instance()
@@ -123,6 +124,8 @@ class ResultsView:
 
     def show_entries(self, entries: List[Any], is_recent_list: bool = False):
         """Show list of entries"""
+        wraplength = config.get_window_width() - 60
+
         # Clear previous entries
         self.clear()
 
@@ -209,7 +212,7 @@ class ResultsView:
             title_label = ttk.Label(
                 entry_frame,
                 text=title_text,
-                wraplength=360,  # Increased for larger window
+                wraplength=wraplength,
                 style=base_label_style,
                 font=('Segoe UI', 11)  # Larger font
             )
@@ -220,7 +223,7 @@ class ResultsView:
                 url_label = ttk.Label(
                     entry_frame,
                     text=f"   {shorten_url(entry.url)}",
-                    wraplength=360,  # Increased for larger window
+                    wraplength=wraplength,
                     style=base_url_label_style,
                     font=('Segoe UI', 10)  # Slightly smaller for URL
                 )

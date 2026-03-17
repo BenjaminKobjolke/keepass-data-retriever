@@ -211,6 +211,7 @@ class SearchWindow:
             self.window.set_expanded(True)
             self.status.set_text("Recent entries for this window:")
             self.results.frame.pack(fill=tk.BOTH, expand=True)
+            self.window.auto_resize()
         else:
             logger.debug("No entries to show")
             self.window.set_expanded(False)
@@ -274,6 +275,7 @@ class SearchWindow:
             is_recent = self.recent_entries_handler.is_recent_list_active
             self.results.show_entries(filtered_entries, is_recent_list=is_recent)
             self.status.show_search_results(filtered_entries)
+            self.window.auto_resize()
         else:
             self.status.set_text("No matching entries")
 
