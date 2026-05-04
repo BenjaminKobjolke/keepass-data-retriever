@@ -7,7 +7,6 @@ from pykeepass import PyKeePass
 import pyperclip
 import time
 import win32api
-import win32con
 import win32event
 import winerror
 from tkinter import messagebox

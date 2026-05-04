@@ -1,7 +1,35 @@
-python -m venv venv
-cd venv
-cd Scripts
-call activate
-cd..
-cd..
-pip install -r requirements.txt
+@echo off
+echo ========================================
+echo  KeePass Data Retriever - Initial Setup
+echo ========================================
+echo.
+
+where uv >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: uv is not installed or not in PATH
+    echo Please install uv first: https://docs.astral.sh/uv/getting-started/installation/
+    pause
+    exit /b 1
+)
+
+echo [1/2] Creating virtual environment and installing dependencies...
+uv sync --all-extras
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: Failed to sync dependencies
+    pause
+    exit /b 1
+)
+
+echo.
+echo [2/2] Running tests...
+uv run pytest tests/ -q
+if %ERRORLEVEL% neq 0 (
+    echo WARNING: Some tests failed or no tests collected
+)
+
+echo.
+echo ========================================
+echo  Setup complete!
+echo ========================================
+echo.
+pause

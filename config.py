@@ -2,8 +2,6 @@
 
 import os
 import configparser
-import re
-from typing import Optional, Tuple
 
 class Config:
     """Configuration handler for KeePass Data Retriever"""

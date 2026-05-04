@@ -76,10 +76,6 @@ class WindowFocusManager:
             try:
                 active_hwnd = win32gui.GetForegroundWindow()
 
-                # Get window titles for debugging
-                active_title = win32gui.GetWindowText(active_hwnd)
-                our_title = win32gui.GetWindowText(self.hwnd)
-
                 # Hide if active window is not our window
                 if active_hwnd != self.hwnd:
                     print("Window lost focus")

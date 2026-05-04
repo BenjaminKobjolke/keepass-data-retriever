@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional, Callable
+from typing import Optional
 import win32gui
 import win32con
 import win32api
@@ -274,12 +274,6 @@ class WindowManager:
             # Get active window handle
             try:
                 active_hwnd = win32gui.GetForegroundWindow()
-                
-                # Get window titles for debugging
-                active_title = win32gui.GetWindowText(active_hwnd)
-                our_title = win32gui.GetWindowText(self.hwnd)
-                #p rint(f"Active window: {active_title} ({active_hwnd})")
-                #p rint(f"Our window: {our_title} ({self.hwnd})")
                 
                 # Hide if active window is not our window
                 if active_hwnd != self.hwnd:

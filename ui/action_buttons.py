@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import Callable, Dict, Any
-import time
 from pynput.keyboard import Controller
 from .dark_button import DarkButton
 from .state_manager import StateManager, AppState
@@ -9,7 +8,6 @@ from .logger import Logger
 from .theme_manager import ThemeManager
 from .action_registry import ActionRegistry
 from config import config
-import pyautogui
 
 # Get logger instance
 logger = Logger.get_instance()
@@ -90,10 +88,6 @@ class ActionButtons:
         logger.debug(f"Entry: {self.current_entry}")
             
         if action.startswith('type_'):
-            # For paste actions, get the text first
-            base_action = action.replace('type_', '')
-            #self.on_action(base_action, self.current_entry)  # Pass the entry along
-            
             # Schedule the paste operation
             self.frame.after(1000, lambda: self._paste_text())
         else:

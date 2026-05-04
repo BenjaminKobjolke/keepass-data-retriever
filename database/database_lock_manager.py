@@ -1,6 +1,5 @@
 """Database locking and idle timeout management."""
 
-import time
 import win32api
 from config import config
 from services.password_provider import PasswordProvider

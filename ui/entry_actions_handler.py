@@ -1,10 +1,9 @@
 import tkinter as tk
-from typing import Any, Callable, Dict
-import time
+from typing import Any, Callable
 from .action_buttons import ActionButtons
 from .keyboard_handler import KeyboardHandler
 from .logger import Logger
-from .state_manager import StateManager, AppState
+from .state_manager import StateManager
 
 # Get logger instance
 logger = Logger.get_instance()

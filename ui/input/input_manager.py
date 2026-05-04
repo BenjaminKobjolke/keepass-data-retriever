@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Callable, Optional, Type, Dict, Any
+from typing import Type, Dict, Any
 from enum import Enum, auto
 from ..state_manager import StateManager, AppState
 from ..logger import Logger

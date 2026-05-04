@@ -1,4 +1,3 @@
-import tkinter as tk
 from tkinter import ttk
 from .url_formatter import shorten_url
 from config import config

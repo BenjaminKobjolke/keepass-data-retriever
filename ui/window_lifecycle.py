@@ -1,7 +1,7 @@
 """Window lifecycle management for show/hide operations."""
 
 import time
-from typing import Optional, Callable, Any
+from typing import Optional, Callable
 from .state_manager import StateManager, AppState
 from .logger import Logger
 from config import config

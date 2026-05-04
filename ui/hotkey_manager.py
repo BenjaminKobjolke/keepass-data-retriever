@@ -140,5 +140,5 @@ class HotkeyManager:
         if hasattr(self, 'hotkey_handler') and self.hotkey_handler:
             try:
                 self.hotkey_handler.stop()
-            except:
+            except Exception:
                 pass  # Ignore errors during shutdown

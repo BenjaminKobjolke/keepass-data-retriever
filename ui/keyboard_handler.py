@@ -1,6 +1,5 @@
 import time
 from pynput.keyboard import Controller, Key
-from typing import Any
 import pyperclip
 from .logger import Logger
 from config import config

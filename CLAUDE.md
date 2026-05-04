@@ -36,25 +36,43 @@ KeePass Data Retriever is a Windows desktop application that provides quick KeeP
 
 ## Development Commands
 
+Project uses `uv` for dependency management. `pyproject.toml` is the single source of truth; `uv.lock` is committed.
+
 ### Environment Setup
 ```bash
-# Create and activate virtual environment
+# First-time setup: creates .venv/, installs all deps (incl. dev + build extras), runs tests
 install.bat
 
-# Manual activation for development
-activate_environment.bat
+# Update all deps to latest, refresh lock, re-run lint/type/test
+update.bat
 ```
 
 ### Running the Application
 ```bash
-# Run directly with Python
-python main.py
+# Standard launch
+start.bat
 
-# Run with custom database (legacy support)
-python main.py --database path/to/database.kdbx
+# Or directly via uv
+uv run python main.py
 
-# Run with password from command line (legacy support)  
-python main.py --password yourpassword
+# With custom database (legacy support)
+uv run python main.py --database path/to/database.kdbx
+
+# With password from command line (legacy support)
+uv run python main.py --password yourpassword
+```
+
+### Tests / Lint / Types
+```bash
+# Run tests
+tools\run_tests.bat
+# or: uv run pytest tests/ -v
+
+# Lint
+uv run ruff check .
+
+# Type check
+uv run mypy .
 ```
 
 ### Building
@@ -62,7 +80,7 @@ python main.py --password yourpassword
 # Compile to standalone executable
 compile_exe.bat
 
-# This runs: pyinstaller --name KeepassDataRetriever --onefile --windowed main.py
+# Internally: uv sync --extra build && uv run pyinstaller --name KeepassDataRetriever --onefile --windowed main.py
 # Output: dist/KeepassDataRetriever.exe
 ```
 

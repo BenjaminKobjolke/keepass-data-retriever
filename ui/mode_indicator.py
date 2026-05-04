@@ -1,7 +1,6 @@
 """Mode indicator widget showing current view mode."""
 
 import tkinter as tk
-from tkinter import ttk
 from .theme_manager import ThemeManager
 
 

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 from .state_manager import StateManager, AppState
 from .logger import Logger
 
@@ -49,7 +49,6 @@ class StateHandler:
         
         # Check for recent entries
         try:
-            from .window_relations_manager import WindowRelationsManager
             
             # Get window relations manager from data
             window_relations_manager = data.get('window_relations_manager')

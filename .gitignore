@@ -1,9 +1,9 @@
 /.idea
 /venv
+/.venv
 /*.kdbx
 /__pycache__
 __pycache__
-/start.bat
 settings.ini
 window-relations.json
 dist

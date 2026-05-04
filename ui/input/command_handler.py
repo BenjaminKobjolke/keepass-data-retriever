@@ -1,6 +1,6 @@
 """Command handler for slash commands like /exit, /reload, /settings."""
 
-from typing import Callable, Optional
+from typing import Callable
 from ..logger import Logger
 from ..events import EventBus, Events
 

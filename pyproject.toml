@@ -1,0 +1,34 @@
+[project]
+name = "keepass-data-retriever"
+version = "0.1.0"
+description = "Quick KeePass database search via global hotkey"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "pykeepass",
+    "pyperclip",
+    "pynput",
+    "pyautogui",
+    "pywin32",
+    "winhotkeys @ git+https://github.com/BenjaminKobjolke/winhotkeys.git@053b0b20bd5d747a4b795d0d392a4a48161fcada",
+]
+
+[project.optional-dependencies]
+build = ["pyinstaller"]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "mypy",
+    "pytest",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["ui.*"]
+ignore_errors = true

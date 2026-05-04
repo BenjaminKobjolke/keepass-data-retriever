@@ -46,12 +46,30 @@ You need a multi-clipboard tool to access the last two entries.
         - When `true`: Credentials are pasted using Ctrl+V (more reliable with special characters)
         - When `false`: Credentials are typed character by character (automatically uses paste for passwords containing `^` to avoid dead key issues)
 
+## Installation
+
+Prerequisite: [uv](https://docs.astral.sh/uv/getting-started/installation/) (Python package manager).
+
+1. Clone the repo.
+2. Run `install.bat` — creates `.venv/`, installs all dependencies (including PyInstaller for building), runs tests.
+3. Copy `settings_example.ini` to `settings.ini` and configure (see Configuration section above).
+4. Launch with `start.bat` (or `uv run python main.py`).
+
+### Update Dependencies
+
+Run `update.bat` to upgrade all packages, refresh `uv.lock`, and re-run lint/type/test checks.
+
+### Build Executable
+
+Run `compile_exe.bat` — produces `dist/KeepassDataRetriever.exe`.
+
 ## Dependencies
 
--   Python 3.10+
--   PyKeePass
--   Tkinter
+-   Python 3.11–3.12
+-   pykeepass
+-   Tkinter (stdlib)
 -   pynput
 -   pyperclip
+-   pyautogui
 -   pywin32
--   global-hotkeys
+-   winhotkeys (custom — pinned git commit)

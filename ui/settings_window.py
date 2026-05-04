@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk, colorchooser
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict
 from .theme_manager import ThemeManager
 from .dark_button import DarkButton
 from config import config
@@ -359,5 +359,5 @@ class SettingsWindow:
             self.on_close()
         try:
             self.root.destroy()
-        except:
+        except Exception:
             pass

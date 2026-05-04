@@ -1,8 +1,7 @@
 """Main search window for KeePass Data Retriever application."""
 
 import tkinter as tk
-from tkinter import ttk
-from typing import Optional, Callable, List, Any, Dict
+from typing import Callable, List, Any, Dict
 import sys
 import os
 
