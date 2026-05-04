@@ -155,7 +155,7 @@ class SearchWindow:
         self.root.bind('<FocusOut>', self.window.check_focus)
 
         # Start hotkey listener
-        self.hotkey = HotkeyManager(self.show_window)
+        self.hotkey = HotkeyManager(self.show_window, root=self.root)
 
         # Register as state listener
         self.state_manager.register_listener(self)

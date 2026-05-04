@@ -18,6 +18,7 @@ class DatabaseManager:
         self.is_locked = False
         self.window = None  # Will be set by main application
         self.state_manager = None  # Will be set by main application
+        self._connecting = False  # Re-entrance guard for connect_database
 
     def get_database_path(self):
         """
@@ -78,6 +79,13 @@ class DatabaseManager:
         Returns:
             bool: True if connection successful, False otherwise
         """
+        # Re-entrance guard: tk's wait_window pumps the event loop, so a
+        # second hotkey press while the password dialog is open would trigger
+        # a recursive connect_database call and stack dialogs.
+        if self._connecting:
+            print("connect_database already in progress, skipping re-entry")
+            return False
+        self._connecting = True
         try:
             db_path = self.get_database_path()
             if not os.path.exists(db_path):
@@ -87,7 +95,8 @@ class DatabaseManager:
 
             # Create validator and get password with inline validation
             validator = self.create_password_validator()
-            password = PasswordProvider.get_password_with_validation(validator)
+            parent = self.window.root if self.window else None
+            password = PasswordProvider.get_password_with_validation(validator, parent=parent)
 
             if not password:  # User cancelled the dialog
                 print("Password input cancelled")
@@ -99,6 +108,8 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error opening KeePass database: {e}")
             return False
+        finally:
+            self._connecting = False
 
     def lazy_connect_database(self):
         """
@@ -118,6 +129,10 @@ class DatabaseManager:
         Returns:
             bool: True if reload successful, False otherwise
         """
+        if self._connecting:
+            print("connect_database already in progress, skipping reload re-entry")
+            return False
+        self._connecting = True
         try:
             # Get database path
             db_path = self.get_database_path()
@@ -127,7 +142,8 @@ class DatabaseManager:
 
             # Create validator and prompt for password with validation
             validator = self.create_password_validator()
-            password = PasswordProvider.get_password_for_reload_with_validation(validator)
+            parent = self.window.root if self.window else None
+            password = PasswordProvider.get_password_for_reload_with_validation(validator, parent=parent)
 
             if not password:  # User cancelled the dialog
                 print("Password input cancelled")
@@ -143,6 +159,8 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error reloading database: {e}")
             return False
+        finally:
+            self._connecting = False
 
     def reload_database(self):
         """Reload the KeePass database."""

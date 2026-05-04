@@ -8,12 +8,20 @@ from .dark_button import DarkButton
 from .window_manager import WindowManager
 
 class PasswordDialog:
-    def __init__(self, title="Enter KeePass Password", validator: Callable[[str], Tuple[bool, Optional[str]]] = None):
+    def __init__(self, title="Enter KeePass Password",
+                 validator: Callable[[str], Tuple[bool, Optional[str]]] = None,
+                 parent: Optional[tk.Tk] = None):
         self.password = None
         self.validator = validator  # Callback: (password) -> (success: bool, error_msg: str|None)
+        self._parent = parent
+        self._owns_root = parent is None
 
-        # Create dialog window
-        self.root = tk.Tk()
+        # Create dialog window. Reuse the existing Tk root via Toplevel when a
+        # parent is supplied; creating a second Tk() corrupts shared Tcl state.
+        if parent is not None:
+            self.root = tk.Toplevel(parent)
+        else:
+            self.root = tk.Tk()
         self.root.withdraw()  # Hide initially to prevent white flash
         
         # Configure window
@@ -84,7 +92,20 @@ class PasswordDialog:
         
         # Show window now that it's configured
         self.root.deiconify()
-        
+
+        # Modal behavior when parented to existing Tk root.
+        # Skip transient(): on Windows, a transient whose master is withdrawn
+        # is auto-hidden by the window manager, which would close this dialog
+        # before user can interact.
+        if self._parent is not None:
+            try:
+                self.root.grab_set()
+            except tk.TclError:
+                pass
+
+        # Treat window-close button the same as Esc
+        self.root.protocol("WM_DELETE_WINDOW", self._on_cancel)
+
         # Focus the entry
         self.entry.focus_force()
 
@@ -135,8 +156,7 @@ class PasswordDialog:
 
                 if success:
                     self.password = password
-                    self.root.quit()
-                    self.root.destroy()
+                    self._close()
                 else:
                     # Show error and allow retry
                     self._show_error(error_msg or "Invalid password")
@@ -151,14 +171,28 @@ class PasswordDialog:
         else:
             # No validator - just return password (backward compatibility)
             self.password = password
-            self.root.quit()
-            self.root.destroy()
+            self._close()
 
     def _on_cancel(self):
         """Handle cancel action"""
         self.password = None
-        self.root.quit()
-        self.root.destroy()
+        self._close()
+
+    def _close(self):
+        """Close dialog. Must not call quit() when parented (would stop the
+        parent's mainloop)."""
+        try:
+            if self._parent is not None:
+                try:
+                    self.root.grab_release()
+                except tk.TclError:
+                    pass
+                self.root.destroy()
+            else:
+                self.root.quit()
+                self.root.destroy()
+        except tk.TclError:
+            pass  # Already destroyed
 
     def _show_error(self, message: str):
         """Show error message below password field"""
@@ -189,12 +223,15 @@ class PasswordDialog:
         try:
             # Re-center window right before showing in case resolution changed
             self._center_window()
-            self.root.mainloop()
+            if self._parent is not None:
+                # Parent's mainloop is already running; block until this dialog closes
+                self._parent.wait_window(self.root)
+            else:
+                self.root.mainloop()
+                try:
+                    self.root.destroy()
+                except tk.TclError:
+                    pass
         except Exception as e:
             print(f"Dialog error: {e}")
-        finally:
-            try:
-                self.root.destroy()
-            except:
-                pass
         return self.password

@@ -9,7 +9,7 @@ class PasswordProvider:
     """Handles password retrieval from command line or GUI dialog."""
 
     @staticmethod
-    def get_password():
+    def get_password(parent=None):
         """
         Get password using command line argument or GUI dialog.
 
@@ -24,16 +24,17 @@ class PasswordProvider:
                 return args[i + 1]
 
         # If no password provided, show password dialog
-        dialog = PasswordDialog()
+        dialog = PasswordDialog(parent=parent)
         return dialog.get_password()
 
     @staticmethod
-    def get_password_with_validation(validator: Callable[[str], Tuple[bool, Optional[str]]]):
+    def get_password_with_validation(validator: Callable[[str], Tuple[bool, Optional[str]]], parent=None):
         """
         Get password using GUI dialog with inline validation.
 
         Args:
             validator: Callback function (password) -> (success, error_msg)
+            parent: Optional Tk root to parent the dialog to
 
         Returns:
             str: Password string if validation succeeded, or None if cancelled
@@ -52,30 +53,31 @@ class PasswordProvider:
                 # Fall through to show dialog
 
         # Show dialog with validator
-        dialog = PasswordDialog(validator=validator)
+        dialog = PasswordDialog(validator=validator, parent=parent)
         return dialog.get_password()
 
     @staticmethod
-    def get_password_for_reload():
+    def get_password_for_reload(parent=None):
         """
         Get password for reload - always show dialog (ignore command line).
 
         Returns:
             str: Password string, or None if cancelled
         """
-        dialog = PasswordDialog()
+        dialog = PasswordDialog(parent=parent)
         return dialog.get_password()
 
     @staticmethod
-    def get_password_for_reload_with_validation(validator: Callable[[str], Tuple[bool, Optional[str]]]):
+    def get_password_for_reload_with_validation(validator: Callable[[str], Tuple[bool, Optional[str]]], parent=None):
         """
         Get password for reload with inline validation - always show dialog.
 
         Args:
             validator: Callback function (password) -> (success, error_msg)
+            parent: Optional Tk root to parent the dialog to
 
         Returns:
             str: Password string if validation succeeded, or None if cancelled
         """
-        dialog = PasswordDialog(validator=validator)
+        dialog = PasswordDialog(validator=validator, parent=parent)
         return dialog.get_password()

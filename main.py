@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import atexit
 import sys
 import pyperclip
 import win32api
@@ -17,12 +18,16 @@ class KeePassRetriever:
     def __init__(self):
         # Single instance check - must be first
         self.mutex = None
+        self._mutex_released = False
         if not self._ensure_single_instance():
             messagebox.showerror(
                 "Already Running",
                 "KeePass Data Retriever is already running."
             )
             sys.exit(0)
+
+        # Safety net: release mutex on interpreter shutdown / uncaught exception
+        atexit.register(self._release_mutex)
 
         # Initialize managers
         self.db_manager = DatabaseManager()
@@ -40,6 +45,17 @@ class KeePassRetriever:
         if last_error == winerror.ERROR_ALREADY_EXISTS:
             return False
         return True
+
+    def _release_mutex(self):
+        """Release the single-instance mutex. Idempotent."""
+        if self._mutex_released:
+            return
+        if self.mutex:
+            try:
+                win32api.CloseHandle(self.mutex)
+            except Exception:
+                pass
+        self._mutex_released = True
 
     def handle_search(self, search_term):
         """Handle search request."""
@@ -82,11 +98,7 @@ class KeePassRetriever:
     def exit_application(self):
         """Exit the application."""
         print("\nExiting application...")
-
-        # Release mutex
-        if self.mutex:
-            win32api.CloseHandle(self.mutex)
-
+        self._release_mutex()
         sys.exit(0)
 
     def run(self):
@@ -132,6 +144,8 @@ class KeePassRetriever:
         except Exception as e:
             print(f"Unexpected error: {e}")
             sys.exit(1)
+        finally:
+            self._release_mutex()
 
 
 def main():

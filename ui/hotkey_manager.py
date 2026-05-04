@@ -1,4 +1,5 @@
-from typing import Callable
+from typing import Callable, Optional
+import tkinter as tk
 # Import directly from the winhotkeys library
 try:
     from winhotkeys import HotkeyHandler
@@ -25,9 +26,10 @@ class HotkeyManager:
         "ctrl": "control"
     }
     
-    def __init__(self, on_activate: Callable):
+    def __init__(self, on_activate: Callable, root: Optional[tk.Tk] = None):
         self.on_activate = on_activate
-        
+        self.root = root
+
         # Get hotkey from config
         configured_hotkey = config.get_search_hotkey()
         
@@ -59,8 +61,27 @@ class HotkeyManager:
                 self.hotkey_handler = None
 
     def _on_hotkey(self):
-        """Handle hotkey activation"""
-        self.on_activate()
+        """Handle hotkey activation.
+
+        winhotkeys fires this on its keyboard hook thread. Marshal onto the
+        Tk main thread via root.after so all UI work runs on the right thread.
+        Hook thread holds the brief foreground privilege from WM_HOTKEY; the
+        main thread does not, so SetForegroundWindow would fail there. Grant
+        our own process explicit permission before marshalling.
+        """
+        try:
+            import ctypes
+            ctypes.windll.user32.AllowSetForegroundWindow(os.getpid())
+        except Exception:
+            pass
+
+        if self.root is not None:
+            try:
+                self.root.after(0, self.on_activate)
+            except tk.TclError:
+                pass  # Root being torn down during shutdown
+        else:
+            self.on_activate()
 
     def _validate_and_translate_hotkey(self, hotkey_str):
         """
