@@ -35,3 +35,8 @@ node_modules/
 # Task files
 tasks.json
 tasks/ 
+claude-plans
+.claude
+.taskmaster
+/nul
+/prompts/git_commit.md
