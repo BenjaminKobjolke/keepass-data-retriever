@@ -120,4 +120,5 @@ class ResultsDisplay:
         # Show the selected entry with action buttons
         self.entry_actions_handler.show_selected_entry(entry)
 
+        self.window_manager.set_expanded(True)
         self.window_manager.auto_resize()
