@@ -356,6 +356,9 @@ class SearchWindow:
         # Reconfigure results view highlight styles
         self.results._configure_highlight_styles()
 
+        # Re-apply frame preference (no-op unless show_frame changed in settings)
+        self.window.refresh_frame()
+
         # Update window/frame backgrounds
         self.window.get_main_frame().configure(style="Dark.TFrame")
 

@@ -1,5 +1,7 @@
 """Constants for the KeePass Data Retriever UI."""
 
+APP_NAME = "Keepass-Retriever"
+
 
 class Actions:
     """Action type identifiers."""

@@ -1,6 +1,7 @@
 """Mode indicator widget showing current view mode."""
 
 import tkinter as tk
+from .constants import APP_NAME
 from .theme_manager import ThemeManager
 
 
@@ -57,6 +58,8 @@ class ModeIndicator:
         color = self._get_mode_color(mode)
         self.label.configure(text=mode, bg=color)
         self.frame.configure(bg=color)
+        # Window title mirrors the current page (visible when frames are enabled)
+        self.frame.winfo_toplevel().title(f"{APP_NAME} - {mode.capitalize()}")
 
     def pack(self, **kwargs):
         """Pack the indicator frame."""

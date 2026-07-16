@@ -3,6 +3,7 @@ from tkinter import ttk
 from typing import Callable, Tuple, Optional
 import win32api
 import win32con
+from .constants import APP_NAME
 from .dark_entry import DarkEntry
 from .dark_button import DarkButton
 from .window_manager import WindowManager, apply_frame_preference
@@ -14,7 +15,7 @@ logger = Logger.get_instance()
 class PasswordDialog:
     def __init__(
         self,
-        title="Enter KeePass Password",
+        title=f"{APP_NAME} - Enter Password",
         validator: Callable[[str], Tuple[bool, Optional[str]]] = None,
         parent: Optional[tk.Tk] = None,
     ):

@@ -5,7 +5,8 @@ from tkinter import ttk, colorchooser
 from typing import Callable, Dict
 from .theme_manager import ThemeManager
 from .dark_button import DarkButton
-from .window_manager import apply_frame_preference
+from .constants import APP_NAME, Fonts
+from .window_manager import apply_frame_preference, frame_needs_refresh
 from config import config
 from theme_colors import ThemeColors
 
@@ -32,7 +33,7 @@ class SettingsWindow:
 
         # Create window
         self.root = tk.Toplevel()
-        self.root.title("Settings - Theme Configuration")
+        self.root.title(f"{APP_NAME} - Settings")
         self.root.configure(bg=ThemeManager.get_color("bg_color"))
         self.root.attributes("-topmost", True)
         self.root.geometry("450x550")
@@ -163,6 +164,21 @@ class SettingsWindow:
         self.trans_value_label.pack(side=tk.LEFT, padx=(5, 0))
 
         self.transparency_var.trace_add("write", self._on_transparency_change)
+
+        # Window frames checkbox
+        self.show_frame_var = tk.BooleanVar(value=config.get_show_frame())
+        frame_check = tk.Checkbutton(
+            main_frame,
+            text="Show window frames",
+            variable=self.show_frame_var,
+            bg=bg_color,
+            fg=fg_color,
+            selectcolor=ThemeManager.get_color("entry_bg"),
+            activebackground=bg_color,
+            activeforeground=fg_color,
+            font=Fonts.NORMAL,
+        )
+        frame_check.pack(anchor="w", pady=(10, 0))
 
         # Buttons frame
         buttons_frame = tk.Frame(main_frame, bg=bg_color)
@@ -311,10 +327,17 @@ class SettingsWindow:
                 ThemeColors(**self.color_values), self.transparency_value
             )
 
+        config.set_show_frame(self.show_frame_var.get())
         config.save_config()
 
         if self.on_apply:
             self.on_apply()
+
+        # Re-apply own frame; Windows needs a remap for overrideredirect changes
+        if frame_needs_refresh(self.root):
+            self.root.withdraw()
+            apply_frame_preference(self.root)
+            self.root.deiconify()
 
     def _save_and_close(self):
         """Save colors to config and close"""
