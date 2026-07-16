@@ -2,6 +2,7 @@ from tkinter import ttk
 from .url_formatter import shorten_url
 from config import config
 
+
 class StatusDisplay:
     def __init__(self, parent: ttk.Frame):
         wraplength = config.get_window_width() - 60
@@ -9,8 +10,8 @@ class StatusDisplay:
             parent,
             text="",
             wraplength=wraplength,
-            style='Dark.TLabel',
-            font=('Segoe UI', 11)  # Larger font
+            style="Dark.TLabel",
+            font=("Segoe UI", 11),  # Larger font
         )
         self.label.pack(padx=5, pady=(0, 5))
 
@@ -19,7 +20,7 @@ class StatusDisplay:
         if not entries:
             self.set_text("No entries found")
             return
-            
+
         if single_entry:
             text = f"{single_entry.title}"
             if single_entry.url:

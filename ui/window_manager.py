@@ -7,6 +7,9 @@ from .theme_manager import ThemeManager
 from .window_positioning_service import WindowPositioningService
 from .window_focus_manager import WindowFocusManager
 from config import config
+from .logger import Logger
+
+logger = Logger.get_instance()
 
 
 class WindowManager:
@@ -37,7 +40,7 @@ class WindowManager:
 
         # Configure window
         self.root.overrideredirect(True)
-        self.root.attributes('-topmost', True, '-alpha', ThemeManager.TRANSPARENCY)
+        self.root.attributes("-topmost", True, "-alpha", ThemeManager.TRANSPARENCY)
         self.root.configure(bg=ThemeManager.BG_COLOR)
 
         # Configure styles using ThemeManager
@@ -45,7 +48,7 @@ class WindowManager:
         ThemeManager.configure_styles(self.style)
 
         # Create main frame
-        self.main_frame = ttk.Frame(self.root, style='Dark.TFrame')
+        self.main_frame = ttk.Frame(self.root, style="Dark.TFrame")
         self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=1)  # Reduced padding
 
         # Create system tray menu
@@ -70,7 +73,7 @@ class WindowManager:
         self.menu.add_command(label="Exit", command=self.quit)
 
         # Bind right-click on root window to show menu
-        self.root.bind('<Button-3>', lambda e: self.menu.post(e.x_root, e.y_root))
+        self.root.bind("<Button-3>", lambda e: self.menu.post(e.x_root, e.y_root))
 
     def show(self):
         """Show the window"""
@@ -84,8 +87,10 @@ class WindowManager:
         self.focus_manager.force_focus()
 
         # Start focus monitoring after 2 seconds
-        print("Will start focus check in 2 seconds")
-        self.root.after(2000, lambda: self.focus_manager.start_focus_monitoring(on_focus_lost=self.hide))
+        logger.debug("Will start focus check in 2 seconds")
+        self.root.after(
+            2000, lambda: self.focus_manager.start_focus_monitoring(on_focus_lost=self.hide)
+        )
 
     def hide(self):
         """Hide the window"""
@@ -107,7 +112,9 @@ class WindowManager:
         if not expanded:
             # Collapse to normal height
             window_width = self.WINDOW_WIDTH
-            WindowPositioningService.position_window(self.root, window_width, self.WINDOW_HEIGHT_NORMAL)
+            WindowPositioningService.position_window(
+                self.root, window_width, self.WINDOW_HEIGHT_NORMAL
+            )
         else:
             # Set a generous initial height, then auto-resize after content is laid out
             x = self.root.winfo_x()

@@ -46,15 +46,16 @@ class RecentEntriesHandler:
 
         try:
             entry_uuid = str(entry_to_delete.uuid)
-            logger.info(f"Requesting deletion of recent entry UUID '{entry_uuid}' "
-                       f"for window '{current_window_title}'.")
+            logger.info(
+                f"Requesting deletion of recent entry UUID '{entry_uuid}' "
+                f"for window '{current_window_title}'."
+            )
             self.window_relations_manager.remove_recent_entry(current_window_title, entry_uuid)
 
             # Refresh the view by transitioning to INITIAL state
             logger.debug("Transitioning to INITIAL state to refresh recent entries view.")
             self.state_manager.transition_to(
-                AppState.INITIAL,
-                {'window_relations_manager': self.window_relations_manager}
+                AppState.INITIAL, {"window_relations_manager": self.window_relations_manager}
             )
         except AttributeError:
             logger.error(f"Failed to get UUID from entry: {entry_to_delete}. Cannot delete.")

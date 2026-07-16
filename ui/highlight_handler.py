@@ -28,14 +28,14 @@ class HighlightHandler:
             return
 
         # Special case: if on first entry and pressing up, deselect all entries
-        if direction == 'up' and current_index == 0:
+        if direction == "up" and current_index == 0:
             self._clear_all_highlights()
             return
 
         # Calculate new index based on direction
-        if direction == 'up':
+        if direction == "up":
             new_index = max(0, current_index - 1) if current_index >= 0 else entry_count - 1
-        elif direction == 'down':
+        elif direction == "down":
             new_index = (current_index + 1) % entry_count if current_index >= 0 else 0
         else:
             return
@@ -56,13 +56,13 @@ class HighlightHandler:
 
         # Clear UI highlights
         for i in range(len(self.results_view.entry_frames)):
-            frame = self.results_view.entry_frames[i]['frame']
-            frame.configure(style='Dark.TFrame')
+            frame = self.results_view.entry_frames[i]["frame"]
+            frame.configure(style="Dark.TFrame")
 
             # Change style of all child labels
             for child in frame.winfo_children():
                 if isinstance(child, ttk.Label):
-                    child.configure(style='Dark.TLabel')
+                    child.configure(style="Dark.TLabel")
 
         # Ensure focus is on the search input
         self.input_manager.search_input.focus_force()

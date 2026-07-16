@@ -26,8 +26,9 @@ class InputMode(Enum):
 class InputManager:
     """Manages input fields and keyboard handling for different modes."""
 
-    def __init__(self, parent: ttk.Frame, entry_class: Type[ttk.Entry],
-                 state_manager: StateManager = None):
+    def __init__(
+        self, parent: ttk.Frame, entry_class: Type[ttk.Entry], state_manager: StateManager = None
+    ):
         self.state_manager = state_manager
 
         # Create command handler for /exit, /reload, /settings
@@ -37,7 +38,7 @@ class InputManager:
         self.mode_indicator = ModeIndicator(parent, "SEARCH")
 
         # Create input frame to position all inputs
-        self.frame = ttk.Frame(parent, style='Dark.TFrame')
+        self.frame = ttk.Frame(parent, style="Dark.TFrame")
         self.frame.pack(padx=2, pady=2)
 
         input_width = max(30, int(config.get_window_width() / 10.5))
@@ -57,23 +58,23 @@ class InputManager:
         self.action_input.grid_remove()  # Hide initially
 
         # Bind events
-        self.search_input.bind('<Return>', self._handle_search)
-        self.search_input.bind('<Up>', self._handle_search_arrow_up)
-        self.search_input.bind('<Down>', self._handle_search_arrow_down)
-        self.search_input.bind('<BackSpace>', self._handle_search_backspace)
-        self.search_input.bind('<KeyRelease>', self._handle_filter_input)
-        self.list_input.bind('<Key>', self._handle_list_key)
-        self.action_input.bind('<Key>', self._handle_action_key)
-        self.action_input.bind('<Return>', self._handle_action_return)
+        self.search_input.bind("<Return>", self._handle_search)
+        self.search_input.bind("<Up>", self._handle_search_arrow_up)
+        self.search_input.bind("<Down>", self._handle_search_arrow_down)
+        self.search_input.bind("<BackSpace>", self._handle_search_backspace)
+        self.search_input.bind("<KeyRelease>", self._handle_filter_input)
+        self.list_input.bind("<Key>", self._handle_list_key)
+        self.action_input.bind("<Key>", self._handle_action_key)
+        self.action_input.bind("<Return>", self._handle_action_return)
 
         # Bind Delete key to search and list inputs
-        self.search_input.bind('<Delete>', self._handle_delete_key)
-        self.list_input.bind('<Delete>', self._handle_delete_key)
+        self.search_input.bind("<Delete>", self._handle_delete_key)
+        self.list_input.bind("<Delete>", self._handle_delete_key)
 
         # Bind ESC key to all inputs
-        self.search_input.bind('<Escape>', self._handle_escape)
-        self.list_input.bind('<Escape>', self._handle_escape)
-        self.action_input.bind('<Escape>', self._handle_escape)
+        self.search_input.bind("<Escape>", self._handle_escape)
+        self.list_input.bind("<Escape>", self._handle_escape)
+        self.action_input.bind("<Escape>", self._handle_escape)
 
         self.entries = []  # Store entries for list selection (may be filtered)
         self.original_entries = []  # Store original unfiltered entries
@@ -91,7 +92,7 @@ class InputManager:
         # Update mode indicator based on state
         if state == AppState.INITIAL:
             # Only show RECENT if there are entries to display
-            entries = data.get('entries', [])
+            entries = data.get("entries", [])
             if entries:
                 self.mode_indicator.set_mode("RECENT")
             else:
@@ -106,14 +107,14 @@ class InputManager:
         if state == AppState.INITIAL or state == AppState.SEARCH:
             self.show_search()
             if state == AppState.SEARCH:
-                search_term = data.get('search_term', '')
+                search_term = data.get("search_term", "")
                 if search_term:
                     self.set_search_text(search_term)
         elif state == AppState.RESULTS_LIST:
             # Don't store entries here - let SearchWindow handle it
             pass
         elif state == AppState.ENTRY_ACTIONS:
-            entry = data.get('entry')
+            entry = data.get("entry")
             if entry:
                 self.current_entry = entry
                 self.show_actions()
@@ -129,7 +130,9 @@ class InputManager:
 
     def _handle_search(self, event):
         """Handle search entry Return key"""
-        logger.debug(f"_handle_search called, entries: {len(self.entries) if self.entries else 0}, current_entry: {self.current_entry is not None}")
+        logger.debug(
+            f"_handle_search called, entries: {len(self.entries) if self.entries else 0}, current_entry: {self.current_entry is not None}"
+        )
 
         search_term = self.search_input.get()
 
@@ -151,7 +154,9 @@ class InputManager:
     def _handle_search_backspace(self, event):
         """Handle backspace key in search input"""
         if not self.search_input.get() and self.entries:
-            logger.debug("Backspace pressed in search mode with empty input, resetting to initial view")
+            logger.debug(
+                "Backspace pressed in search mode with empty input, resetting to initial view"
+            )
             self.reset_to_initial_view()
             return "break"
         return False
@@ -159,9 +164,24 @@ class InputManager:
     def _handle_filter_input(self, event):
         """Handle key release in search input for filtering results"""
         # Skip special keys that don't change text
-        if event.keysym in ('Return', 'Up', 'Down', 'Escape', 'Delete', 'Tab',
-                            'Shift_L', 'Shift_R', 'Control_L', 'Control_R',
-                            'Alt_L', 'Alt_R', 'Left', 'Right', 'Home', 'End'):
+        if event.keysym in (
+            "Return",
+            "Up",
+            "Down",
+            "Escape",
+            "Delete",
+            "Tab",
+            "Shift_L",
+            "Shift_R",
+            "Control_L",
+            "Control_R",
+            "Alt_L",
+            "Alt_R",
+            "Left",
+            "Right",
+            "Home",
+            "End",
+        ):
             return
 
         # Only filter if we have original entries to filter
@@ -179,13 +199,15 @@ class InputManager:
         # Filter entries by title, username, and URL (case-insensitive)
         filtered = []
         for entry in self.original_entries:
-            title = getattr(entry, 'title', '') or ''
-            username = getattr(entry, 'username', '') or ''
-            url = getattr(entry, 'url', '') or ''
+            title = getattr(entry, "title", "") or ""
+            username = getattr(entry, "username", "") or ""
+            url = getattr(entry, "url", "") or ""
 
-            if (filter_text in title.lower() or
-                filter_text in username.lower() or
-                filter_text in url.lower()):
+            if (
+                filter_text in title.lower()
+                or filter_text in username.lower()
+                or filter_text in url.lower()
+            ):
                 filtered.append(entry)
 
         self.entries = filtered
@@ -215,23 +237,23 @@ class InputManager:
             return "break"
 
         # Handle Backspace key to go back to main GUI
-        if event.keysym == 'BackSpace':
+        if event.keysym == "BackSpace":
             self.reset_to_search()
             return "break"
 
         # Handle arrow keys for navigation
-        if event.keysym == 'Up':
+        if event.keysym == "Up":
             self._navigate_previous()
             return "break"
-        elif event.keysym == 'Down':
+        elif event.keysym == "Down":
             self._navigate_next()
             return "break"
-        elif event.keysym == 'Return':
+        elif event.keysym == "Return":
             if self.current_entry:
                 EventBus.publish(Events.SELECT, self.current_entry)
             return "break"
 
-        if event.char == '0':
+        if event.char == "0":
             self.reset_to_search()
         elif event.char.isdigit():
             number = int(event.char)
@@ -247,12 +269,12 @@ class InputManager:
     def _navigate_previous(self):
         """Navigate to the previous entry in the list"""
         if self.entries:
-            EventBus.publish(Events.HIGHLIGHT_CHANGE, 'up')
+            EventBus.publish(Events.HIGHLIGHT_CHANGE, "up")
 
     def _navigate_next(self):
         """Navigate to the next entry in the list"""
         if self.entries:
-            EventBus.publish(Events.HIGHLIGHT_CHANGE, 'down')
+            EventBus.publish(Events.HIGHLIGHT_CHANGE, "down")
 
     def _handle_action_key(self, event):
         """Handle key press in action selection input"""
@@ -263,7 +285,7 @@ class InputManager:
             return "break"
 
         # Handle Backspace key to go back to main GUI
-        if event.keysym == 'BackSpace':
+        if event.keysym == "BackSpace":
             logger.debug("Backspace pressed in action mode, returning to search")
             stored_entries = self.entries.copy() if self.entries else []
             logger.debug(f"Stored {len(stored_entries)} entries")
@@ -272,19 +294,21 @@ class InputManager:
             return "break"
 
         # Handle arrow keys for navigation
-        if event.keysym == 'Up':
+        if event.keysym == "Up":
             self._navigate_action_previous()
             return "break"
-        elif event.keysym == 'Down':
+        elif event.keysym == "Down":
             self._navigate_action_next()
             return "break"
 
-        if event.char == '0':
+        if event.char == "0":
             self.reset_to_search()
         elif event.char.isdigit():
             action = ActionRegistry.get_action_by_key(event.char)
             if action:
-                EventBus.publish(Events.ACTION, {'action_id': action['id'], 'entry': self.current_entry})
+                EventBus.publish(
+                    Events.ACTION, {"action_id": action["id"], "entry": self.current_entry}
+                )
                 EventBus.publish(Events.HIDE)
 
         # Clear the input
@@ -294,16 +318,18 @@ class InputManager:
     def _navigate_action_previous(self):
         """Navigate to the previous action"""
         if self.current_entry:
-            EventBus.publish(Events.ACTION_HIGHLIGHT_CHANGE, 'up')
+            EventBus.publish(Events.ACTION_HIGHLIGHT_CHANGE, "up")
 
     def _navigate_action_next(self):
         """Navigate to the next action"""
         if self.current_entry:
-            EventBus.publish(Events.ACTION_HIGHLIGHT_CHANGE, 'down')
+            EventBus.publish(Events.ACTION_HIGHLIGHT_CHANGE, "down")
 
     def reset_to_initial_view(self):
         """Reset to initial view and clear entries"""
-        logger.debug(f"Resetting to initial view, clearing {len(self.entries) if self.entries else 0} entries")
+        logger.debug(
+            f"Resetting to initial view, clearing {len(self.entries) if self.entries else 0} entries"
+        )
 
         self.entries = []
         self.original_entries = []
@@ -311,7 +337,7 @@ class InputManager:
         self.show_search()
 
         if self.state_manager:
-            self.state_manager.transition_to(AppState.INITIAL, {'clear_entries': True})
+            self.state_manager.transition_to(AppState.INITIAL, {"clear_entries": True})
 
         EventBus.publish(Events.SHOW_INITIAL)
 
@@ -328,7 +354,7 @@ class InputManager:
         self.entries = stored_entries
 
         if self.state_manager:
-            self.state_manager.transition_to(AppState.SEARCH, {'entries': self.entries})
+            self.state_manager.transition_to(AppState.SEARCH, {"entries": self.entries})
 
         if self.entries and len(self.entries) > 0:
             logger.debug(f"Restoring {len(self.entries)} entries after reset")
@@ -353,7 +379,9 @@ class InputManager:
 
     def show_list(self, entries):
         """Show list selection input"""
-        logger.debug(f"show_list called from {__import__('traceback').extract_stack()[-2][2]} with {len(entries)} entries")
+        logger.debug(
+            f"show_list called from {__import__('traceback').extract_stack()[-2][2]} with {len(entries)} entries"
+        )
         self.set_entries(entries)
 
         if len(entries) == 1:
@@ -378,9 +406,7 @@ class InputManager:
         self.action_input.grid()
 
         self.action_input.configure(
-            background=ThemeManager.get_color('bg_color'),
-            highlightthickness=0,
-            width=1
+            background=ThemeManager.get_color("bg_color"), highlightthickness=0, width=1
         )
 
         self.action_input.grid(pady=(0, 1))

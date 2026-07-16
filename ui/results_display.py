@@ -10,9 +10,16 @@ logger = Logger.get_instance()
 class ResultsDisplay:
     """Controls how search results are displayed."""
 
-    def __init__(self, results_view, window_manager, status_display,
-                 input_manager, entry_actions_handler, state_manager: StateManager,
-                 recent_entries_handler):
+    def __init__(
+        self,
+        results_view,
+        window_manager,
+        status_display,
+        input_manager,
+        entry_actions_handler,
+        state_manager: StateManager,
+        recent_entries_handler,
+    ):
         self.results_view = results_view
         self.window_manager = window_manager
         self.status_display = status_display
@@ -21,8 +28,13 @@ class ResultsDisplay:
         self.state_manager = state_manager
         self.recent_entries_handler = recent_entries_handler
 
-    def show_entries(self, entries: List[Any], keep_search_mode: bool = True,
-                     skip_state_transition: bool = False, is_recent_list: bool = False):
+    def show_entries(
+        self,
+        entries: List[Any],
+        keep_search_mode: bool = True,
+        skip_state_transition: bool = False,
+        is_recent_list: bool = False,
+    ):
         """
         Display entries with appropriate mode.
 
@@ -32,8 +44,10 @@ class ResultsDisplay:
             skip_state_transition: Skip state manager transition
             is_recent_list: True if showing recent entries (deletable)
         """
-        logger.debug(f"Showing {len(entries)} entries, keep_search_mode={keep_search_mode}, "
-                    f"is_recent_list={is_recent_list}")
+        logger.debug(
+            f"Showing {len(entries)} entries, keep_search_mode={keep_search_mode}, "
+            f"is_recent_list={is_recent_list}"
+        )
 
         # Update recent list tracking
         self.recent_entries_handler.set_recent_list_active(is_recent_list)
@@ -50,14 +64,15 @@ class ResultsDisplay:
         if len(entries) == 1 and not keep_search_mode:
             self._show_single_entry(entries[0], skip_state_transition)
         else:
-            self._show_multiple_entries(entries, keep_search_mode, skip_state_transition,
-                                        is_recent_list)
+            self._show_multiple_entries(
+                entries, keep_search_mode, skip_state_transition, is_recent_list
+            )
 
     def _show_single_entry(self, entry: Any, skip_state_transition: bool):
         """Show single entry with actions directly."""
         # Transition to ENTRY_ACTIONS state
         if not skip_state_transition:
-            self.state_manager.transition_to(AppState.ENTRY_ACTIONS, {'entry': entry})
+            self.state_manager.transition_to(AppState.ENTRY_ACTIONS, {"entry": entry})
 
         self.window_manager.set_expanded(True)
         self.status_display.show_search_results([entry], entry)
@@ -71,12 +86,17 @@ class ResultsDisplay:
 
         self.window_manager.auto_resize()
 
-    def _show_multiple_entries(self, entries: List[Any], keep_search_mode: bool,
-                               skip_state_transition: bool, is_recent_list: bool):
+    def _show_multiple_entries(
+        self,
+        entries: List[Any],
+        keep_search_mode: bool,
+        skip_state_transition: bool,
+        is_recent_list: bool,
+    ):
         """Show multiple entries in list view."""
         # Transition to RESULTS_LIST state
         if not skip_state_transition:
-            self.state_manager.transition_to(AppState.RESULTS_LIST, {'entries': entries})
+            self.state_manager.transition_to(AppState.RESULTS_LIST, {"entries": entries})
 
         self.window_manager.set_expanded(True)
         self.results_view.show_entries(entries, is_recent_list=is_recent_list)

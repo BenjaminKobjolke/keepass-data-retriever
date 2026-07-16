@@ -28,7 +28,7 @@ from .recent_entries_handler import RecentEntriesHandler
 from .results_display import ResultsDisplay
 
 # Add parent directory to path to import config
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import config
 
 # Get logger instance
@@ -38,8 +38,14 @@ logger = Logger.get_instance()
 class SearchWindow:
     """Main window coordinator for KeePass Data Retriever application."""
 
-    def __init__(self, on_search: Callable, on_action: Callable, on_select: Callable,
-                 on_connect: Callable, on_get_recent_entries: Callable):
+    def __init__(
+        self,
+        on_search: Callable,
+        on_action: Callable,
+        on_select: Callable,
+        on_connect: Callable,
+        on_get_recent_entries: Callable,
+    ):
         """Initialize the search window."""
         # Initialize state manager
         self.state_manager = StateManager()
@@ -71,21 +77,16 @@ class SearchWindow:
             self.state_manager,
             self.on_action,
             self.window_relations_manager,
-            self._do_hide
+            self._do_hide,
         )
 
         # Initialize recent entries handler
         self.recent_entries_handler = RecentEntriesHandler(
-            self.window_relations_manager,
-            self.state_manager
+            self.window_relations_manager, self.state_manager
         )
 
         # Initialize input manager
-        self.input = InputManager(
-            self.window.get_main_frame(),
-            DarkEntry,
-            self.state_manager
-        )
+        self.input = InputManager(self.window.get_main_frame(), DarkEntry, self.state_manager)
 
         # Subscribe to EventBus events
         EventBus.subscribe(Events.SEARCH, self._handle_search)
@@ -117,15 +118,11 @@ class SearchWindow:
             self.show_selected_entry,
             self._handle_reset,
             self.input.set_search_text,
-            self.input.show_search
+            self.input.show_search,
         )
 
         # Initialize highlight handler
-        self.highlight_handler = HighlightHandler(
-            self.results,
-            self.input,
-            self.window
-        )
+        self.highlight_handler = HighlightHandler(self.results, self.input, self.window)
 
         # Initialize results display controller
         self.results_display = ResultsDisplay(
@@ -135,7 +132,7 @@ class SearchWindow:
             self.input,
             self.entry_actions_handler,
             self.state_manager,
-            self.recent_entries_handler
+            self.recent_entries_handler,
         )
 
         # Initialize window lifecycle controller
@@ -145,13 +142,13 @@ class SearchWindow:
             self.window_relations_manager,
             self.state_handler,
             self.on_connect,
-            self.input
+            self.input,
         )
 
         # Bind events
-        self.root.bind('<Return>', self._handle_return)
-        self.root.bind('<Escape>', lambda e: self.hide())
-        self.root.bind('<FocusOut>', self.window.check_focus)
+        self.root.bind("<Return>", self._handle_return)
+        self.root.bind("<Escape>", lambda e: self.hide())
+        self.root.bind("<FocusOut>", self.window.check_focus)
 
         # Start hotkey listener
         self.hotkey = HotkeyManager(self.show_window, root=self.root)
@@ -164,8 +161,8 @@ class SearchWindow:
         logger.debug(f"SearchWindow: State changed to {state}")
 
         # Add window_relations_manager to data for state handler
-        if 'window_relations_manager' not in data:
-            data['window_relations_manager'] = self.window_relations_manager
+        if "window_relations_manager" not in data:
+            data["window_relations_manager"] = self.window_relations_manager
 
         # Let the state handler handle the state change
         if state != AppState.HIDDEN:
@@ -176,13 +173,13 @@ class SearchWindow:
     def _handle_search(self, search_term: str):
         """Handle search request."""
         logger.debug(f"Search request with term: '{search_term}'")
-        self.state_manager.transition_to(AppState.SEARCH, {'search_term': search_term})
+        self.state_manager.transition_to(AppState.SEARCH, {"search_term": search_term})
         self.on_search(search_term)
 
     def _handle_select(self, entry: Any):
         """Handle entry selection."""
         logger.debug(f"Entry selected: {entry.title}")
-        self.state_manager.transition_to(AppState.ENTRY_ACTIONS, {'entry': entry})
+        self.state_manager.transition_to(AppState.ENTRY_ACTIONS, {"entry": entry})
         self.on_select(entry)
 
     def _handle_reset(self):
@@ -205,8 +202,12 @@ class SearchWindow:
         # Check if we have entries to show
         if self.input.entries and len(self.input.entries) > 0:
             logger.debug(f"Showing {len(self.input.entries)} entries")
-            self.show_entries(self.input.entries, keep_search_mode=True,
-                            skip_state_transition=True, is_recent_list=False)
+            self.show_entries(
+                self.input.entries,
+                keep_search_mode=True,
+                skip_state_transition=True,
+                is_recent_list=False,
+            )
             self.window.set_expanded(True)
             self.status.set_text("Recent entries for this window:")
             self.results.frame.pack(fill=tk.BOTH, expand=True)
@@ -251,8 +252,8 @@ class SearchWindow:
 
     def _handle_action_event(self, data: Dict[str, Any]):
         """Handle action event from EventBus."""
-        action_id = data.get('action_id')
-        entry = data.get('entry')
+        action_id = data.get("action_id")
+        entry = data.get("entry")
         if action_id and entry:
             self.entry_actions_handler.handle_action(action_id, entry)
 
@@ -278,11 +279,17 @@ class SearchWindow:
         else:
             self.status.set_text("No matching entries")
 
-    def show_entries(self, entries: List[Any], keep_search_mode=True,
-                     skip_state_transition=False, is_recent_list: bool = False):
+    def show_entries(
+        self,
+        entries: List[Any],
+        keep_search_mode=True,
+        skip_state_transition=False,
+        is_recent_list: bool = False,
+    ):
         """Show search results."""
-        self.results_display.show_entries(entries, keep_search_mode,
-                                          skip_state_transition, is_recent_list)
+        self.results_display.show_entries(
+            entries, keep_search_mode, skip_state_transition, is_recent_list
+        )
 
     def show_selected_entry(self, entry: Any, skip_state_transition=False):
         """Show selected entry."""
@@ -305,7 +312,7 @@ class SearchWindow:
     def _handle_reload(self):
         """Handle reload command."""
         logger.info("Reload command detected")
-        if hasattr(self, 'reload_handler') and self.reload_handler:
+        if hasattr(self, "reload_handler") and self.reload_handler:
             self.reload_handler()
         else:
             logger.warning("No reload handler configured")
@@ -315,8 +322,7 @@ class SearchWindow:
         logger.info("Settings command detected, opening settings window")
         if self.settings_window is None:
             self.settings_window = SettingsWindow(
-                on_close=self._on_settings_closed,
-                on_apply=self._on_settings_applied
+                on_close=self._on_settings_closed, on_apply=self._on_settings_applied
             )
 
     def _on_settings_closed(self):
@@ -342,7 +348,7 @@ class SearchWindow:
         self.results._configure_highlight_styles()
 
         # Update window/frame backgrounds
-        self.window.get_main_frame().configure(style='Dark.TFrame')
+        self.window.get_main_frame().configure(style="Dark.TFrame")
 
         logger.info("Theme update complete")
 

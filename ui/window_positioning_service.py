@@ -5,6 +5,9 @@ import win32gui
 import win32con
 import win32api
 from config import config
+from .logger import Logger
+
+logger = Logger.get_instance()
 
 
 class WindowPositioningService:
@@ -41,7 +44,7 @@ class WindowPositioningService:
 
             return (validated_x, validated_y)
         except Exception as e:
-            print(f"Error validating window position: {e}")
+            logger.error(f"Error validating window position: {e}")
             # Return original coordinates if validation fails
             return (x, y)
 
@@ -95,13 +98,15 @@ class WindowPositioningService:
             center_y = top + (active_height - height) // 2
 
             # Validate position to ensure window is visible on screen (all edges)
-            center_x, center_y = WindowPositioningService.validate_position(center_x, center_y, width, height)
+            center_x, center_y = WindowPositioningService.validate_position(
+                center_x, center_y, width, height
+            )
 
             # Set window position
             root.geometry(f"{width}x{height}+{center_x}+{center_y}")
         except Exception as e:
             # Fallback to mouse position if error
-            print(f"Error positioning window in center: {e}")
+            logger.error(f"Error positioning window in center: {e}")
             WindowPositioningService.position_at_mouse(root, width, height)
 
     @staticmethod
@@ -124,13 +129,15 @@ class WindowPositioningService:
             center_y = (screen_height - height) // 2
 
             # Validate position to ensure window is visible on screen
-            center_x, center_y = WindowPositioningService.validate_position(center_x, center_y, width, height)
+            center_x, center_y = WindowPositioningService.validate_position(
+                center_x, center_y, width, height
+            )
 
             # Set window position
             root.geometry(f"{width}x{height}+{center_x}+{center_y}")
         except Exception as e:
             # Fallback to mouse position if error
-            print(f"Error positioning window in center of screen: {e}")
+            logger.error(f"Error positioning window in center of screen: {e}")
             WindowPositioningService.position_at_mouse(root, width, height)
 
     @staticmethod
@@ -148,10 +155,10 @@ class WindowPositioningService:
         if mode is None:
             mode = config.get_window_position_mode()
 
-        if mode == 'center':
+        if mode == "center":
             # Center in active window
             WindowPositioningService.position_center_window(root, width, height)
-        elif mode == 'center_screen':
+        elif mode == "center_screen":
             # Center on screen
             WindowPositioningService.position_center_screen(root, width, height)
         else:

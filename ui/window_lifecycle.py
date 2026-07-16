@@ -12,9 +12,15 @@ logger = Logger.get_instance()
 class WindowLifecycle:
     """Manages window show/hide lifecycle and context detection."""
 
-    def __init__(self, window_manager, state_manager: StateManager,
-                 window_relations_manager, state_handler,
-                 on_connect: Callable, input_manager):
+    def __init__(
+        self,
+        window_manager,
+        state_manager: StateManager,
+        window_relations_manager,
+        state_handler,
+        on_connect: Callable,
+        input_manager,
+    ):
         self.window_manager = window_manager
         self.state_manager = state_manager
         self.window_relations_manager = window_relations_manager
@@ -49,19 +55,23 @@ class WindowLifecycle:
 
         # Determine state transitions
         current_app_state = self.state_manager.get_current_state()
-        logger.debug(f"Current state before processing: {current_app_state}, "
-                    f"last hidden title: '{self.active_window_title_at_last_hide}', "
-                    f"new title: '{newly_logged_window_title}'")
+        logger.debug(
+            f"Current state before processing: {current_app_state}, "
+            f"last hidden title: '{self.active_window_title_at_last_hide}', "
+            f"new title: '{newly_logged_window_title}'"
+        )
 
         # Check if context changed
         context_changed = (
-            self.active_window_title_at_last_hide is not None and
-            self.active_window_title_at_last_hide != newly_logged_window_title
+            self.active_window_title_at_last_hide is not None
+            and self.active_window_title_at_last_hide != newly_logged_window_title
         )
 
         if context_changed:
-            logger.info(f"Window context changed from '{self.active_window_title_at_last_hide}' "
-                       f"to '{newly_logged_window_title}'. Triggering reset to INITIAL.")
+            logger.info(
+                f"Window context changed from '{self.active_window_title_at_last_hide}' "
+                f"to '{newly_logged_window_title}'. Triggering reset to INITIAL."
+            )
 
         # Determine reset conditions
         reset_to_initial, reset_reason = self._should_reset_to_initial(
@@ -76,8 +86,9 @@ class WindowLifecycle:
 
         return True
 
-    def _should_reset_to_initial(self, context_changed: bool, current_state: AppState,
-                                  current_time: float) -> tuple:
+    def _should_reset_to_initial(
+        self, context_changed: bool, current_state: AppState, current_time: float
+    ) -> tuple:
         """
         Determine if state should reset to initial.
 
@@ -92,12 +103,13 @@ class WindowLifecycle:
             return True, "search reset timeout exceeded"
         return False, ""
 
-    def _handle_state_transition(self, reset_to_initial: bool, reset_reason: str,
-                                  current_app_state: AppState):
+    def _handle_state_transition(
+        self, reset_to_initial: bool, reset_reason: str, current_app_state: AppState
+    ):
         """Handle the appropriate state transition."""
         if reset_to_initial:
             logger.debug(f"{reset_reason}, transitioning to INITIAL state")
-            data = {'window_relations_manager': self.window_relations_manager}
+            data = {"window_relations_manager": self.window_relations_manager}
             self.state_manager.transition_to(AppState.INITIAL, data)
         elif current_app_state == AppState.HIDDEN:
             previous_state = self.state_manager.get_previous_state()
@@ -105,7 +117,7 @@ class WindowLifecycle:
 
             if previous_state == AppState.INITIAL:
                 logger.debug("Previous state was INITIAL, transitioning back")
-                data = {'window_relations_manager': self.window_relations_manager}
+                data = {"window_relations_manager": self.window_relations_manager}
                 self.state_manager.transition_to(AppState.INITIAL, data)
             else:
                 logger.debug("Attempting to restore previous state")
@@ -122,7 +134,9 @@ class WindowLifecycle:
         """Hide the window with state preservation."""
         # Store current window title
         self.active_window_title_at_last_hide = self.window_relations_manager.current_window_title
-        logger.debug(f"Storing active_window_title_at_last_hide: '{self.active_window_title_at_last_hide}'")
+        logger.debug(
+            f"Storing active_window_title_at_last_hide: '{self.active_window_title_at_last_hide}'"
+        )
 
         # Transition to HIDDEN state if not already
         current_state = self.state_manager.get_current_state()

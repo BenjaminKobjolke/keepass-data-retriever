@@ -8,19 +8,20 @@ logger = Logger.get_instance()
 
 class Events:
     """Event type constants."""
-    SEARCH = 'search'
-    SELECT = 'select'
-    ACTION = 'action'
-    HIDE = 'hide'
-    RESET = 'reset'
-    SHOW_INITIAL = 'show_initial'
-    HIGHLIGHT_CHANGE = 'highlight_change'
-    ACTION_HIGHLIGHT_CHANGE = 'action_highlight_change'
-    DELETE_ENTRY = 'delete_entry'
-    EXIT = 'exit'
-    RELOAD = 'reload'
-    SETTINGS = 'settings'
-    FILTER = 'filter'
+
+    SEARCH = "search"
+    SELECT = "select"
+    ACTION = "action"
+    HIDE = "hide"
+    RESET = "reset"
+    SHOW_INITIAL = "show_initial"
+    HIGHLIGHT_CHANGE = "highlight_change"
+    ACTION_HIGHLIGHT_CHANGE = "action_highlight_change"
+    DELETE_ENTRY = "delete_entry"
+    EXIT = "exit"
+    RELOAD = "reload"
+    SETTINGS = "settings"
+    FILTER = "filter"
 
 
 class EventBus:

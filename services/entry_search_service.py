@@ -39,11 +39,13 @@ class EntrySearchService:
             username = (entry.username or "").lower()
 
             # Replace hyphens with spaces to improve matching
-            searchable_title = title.replace('-', ' ')
-            searchable_username = username.replace('-', ' ')
+            searchable_title = title.replace("-", " ")
+            searchable_username = username.replace("-", " ")
 
             # Check if all search terms are found in either title or username
-            if all(term in searchable_title or term in searchable_username for term in search_terms):
+            if all(
+                term in searchable_title or term in searchable_username for term in search_terms
+            ):
                 entries.append(entry)
 
         return entries
@@ -58,17 +60,15 @@ class EntrySearchService:
         Returns:
             list: List of found KeePass entries
         """
-        print(f"DEBUG: Searching for {len(uuids)} UUIDs in KeePass database: {uuids}")
+        self.logger.debug(f"Searching for {len(uuids)} UUIDs in KeePass database: {uuids}")
 
         # Ensure database is connected before attempting to find entries
         if not self.database_manager.lazy_connect_database():
             self.logger.debug("Cannot find entries: database connection failed")
-            print("DEBUG: Database connection failed")
             return []
 
         if self.database_manager.is_locked or not self.database_manager.kp:
             self.logger.debug("Cannot find entries: database is locked or not connected")
-            print("DEBUG: Database is locked or not connected")
             return []
 
         self.logger.debug(f"Finding entries for {len(uuids)} UUIDs: {uuids}")
@@ -76,12 +76,10 @@ class EntrySearchService:
         # Check if we have any entries at all
         if not self.database_manager.kp.entries:
             self.logger.debug("No entries in the database")
-            print("DEBUG: No entries in the database")
             return []
 
         # Log total number of entries in database for debugging
         self.logger.debug(f"Total entries in database: {len(self.database_manager.kp.entries)}")
-        print(f"DEBUG: Total entries in database: {len(self.database_manager.kp.entries)}")
 
         entries = []
         for uuid_str in uuids:
@@ -94,34 +92,33 @@ class EntrySearchService:
                 entry = self.database_manager.kp.find_entries(uuid=uuid_obj, first=True)
                 if entry:
                     self.logger.debug(f"Found entry: {entry.title} (UUID: {entry.uuid})")
-                    print(f"DEBUG: Found entry in database: '{entry.title}' (UUID: {entry.uuid})")
                     entries.append(entry)
                 else:
-                    self.logger.debug(f"No entry found for UUID: {uuid_str}")
-                    print(f"DEBUG: No entry found for UUID: {uuid_str}, trying manual search...")
+                    self.logger.debug(
+                        f"No entry found for UUID: {uuid_str}, trying manual search..."
+                    )
 
                     # Try to find the entry by iterating through all entries
                     # This is a fallback in case the find_entries method doesn't work
                     found = False
                     for e in self.database_manager.kp.entries:
                         if str(e.uuid) == uuid_str:
-                            self.logger.debug(f"Found entry by manual search: {e.title} (UUID: {e.uuid})")
-                            print(f"DEBUG: Found entry by manual search: '{e.title}' (UUID: {e.uuid})")
+                            self.logger.debug(
+                                f"Found entry by manual search: {e.title} (UUID: {e.uuid})"
+                            )
                             entries.append(e)
                             found = True
                             break
 
                     if not found:
                         self.logger.debug(f"Entry not found even with manual search: {uuid_str}")
-                        print(f"DEBUG: Entry not found even with manual search: {uuid_str}")
             except Exception as e:
                 self.logger.error(f"Error finding entry with UUID {uuid_str}: {e}")
-                print(f"DEBUG: Error finding entry with UUID {uuid_str}: {e}")
                 import traceback
+
                 self.logger.error(traceback.format_exc())
 
         self.logger.debug(f"Found {len(entries)} entries total")
-        print(f"DEBUG: Found {len(entries)} entries total in database")
         return entries
 
     def get_recent_entries(self, entry_ids):

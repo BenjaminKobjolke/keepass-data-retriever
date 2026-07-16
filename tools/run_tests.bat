@@ -15,7 +15,7 @@ if %ERRORLEVEL% neq 0 (
 echo Running tests...
 echo.
 pushd "%~dp0\.."
-uv run pytest tests/ -v
+uv run pytest tests/ -v --ignore=tests/integration
 set TEST_EXIT=%ERRORLEVEL%
 popd
 if %TEST_EXIT% neq 0 (

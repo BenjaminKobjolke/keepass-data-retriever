@@ -42,6 +42,6 @@ def shorten_url(url, max_length=30):
 
     # Step 3: Truncate if longer than max_length
     if len(shortened) > max_length:
-        shortened = shortened[:max_length - 3] + "..."
+        shortened = shortened[: max_length - 3] + "..."
 
     return shortened

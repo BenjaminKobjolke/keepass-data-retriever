@@ -9,10 +9,10 @@ class ModeIndicator:
 
     # Mode colors (bright, distinct colors for each mode)
     MODE_COLORS = {
-        'RECENT': '#1e90ff',   # DodgerBlue - for recent entries
-        'SEARCH': '#ff8c00',   # DarkOrange - for active search
-        'RESULTS': '#32cd32',  # LimeGreen - for results navigation
-        'ACTIONS': '#9932cc',  # DarkOrchid - for entry actions
+        "RECENT": "#1e90ff",  # DodgerBlue - for recent entries
+        "SEARCH": "#ff8c00",  # DarkOrange - for active search
+        "RESULTS": "#32cd32",  # LimeGreen - for results navigation
+        "ACTIONS": "#9932cc",  # DarkOrchid - for entry actions
     }
 
     def __init__(self, parent: tk.Widget, mode: str = ""):
@@ -27,27 +27,24 @@ class ModeIndicator:
         self.current_mode = mode
 
         # Create frame to hold the label with background color
-        self.frame = tk.Frame(
-            parent,
-            bg=self._get_mode_color(mode)
-        )
-        self.frame.pack(padx=2, pady=(2, 0), fill='x')
+        self.frame = tk.Frame(parent, bg=self._get_mode_color(mode))
+        self.frame.pack(padx=2, pady=(2, 0), fill="x")
 
         # Create label
         self.label = tk.Label(
             self.frame,
             text=mode,
-            font=('Segoe UI', 11, 'bold'),
-            fg='#ffffff',
+            font=("Segoe UI", 11, "bold"),
+            fg="#ffffff",
             bg=self._get_mode_color(mode),
             padx=12,
-            pady=4
+            pady=4,
         )
-        self.label.pack(anchor='w')
+        self.label.pack(anchor="w")
 
     def _get_mode_color(self, mode: str) -> str:
         """Get the background color for a mode."""
-        return self.MODE_COLORS.get(mode, ThemeManager.get_color('button_bg'))
+        return self.MODE_COLORS.get(mode, ThemeManager.get_color("button_bg"))
 
     def set_mode(self, mode: str):
         """
@@ -63,8 +60,8 @@ class ModeIndicator:
 
     def pack(self, **kwargs):
         """Pack the indicator frame."""
-        if 'fill' not in kwargs:
-            kwargs['fill'] = 'x'
+        if "fill" not in kwargs:
+            kwargs["fill"] = "x"
         self.frame.pack(**kwargs)
 
     def pack_forget(self):

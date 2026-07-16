@@ -4,6 +4,9 @@ import win32api
 from config import config
 from services.password_provider import PasswordProvider
 from ui.state_manager import AppState
+from ui.logger import Logger
+
+logger = Logger.get_instance()
 
 
 class DatabaseLockManager:
@@ -29,7 +32,7 @@ class DatabaseLockManager:
             idle_time = (win32api.GetTickCount() - last_input) / 1000.0  # Convert to seconds
 
             if idle_time >= self.idle_timeout and not self.database_manager.is_locked:
-                print(f"System idle for {idle_time:.1f} seconds - locking database")
+                logger.info(f"System idle for {idle_time:.1f} seconds - locking database")
                 # Lock database
                 self.database_manager.lock()
 
@@ -42,7 +45,7 @@ class DatabaseLockManager:
                 self.window.root.after(1000, self.check_idle_time)  # Check every second
 
         except Exception as e:
-            print(f"Error checking idle time: {e}")
+            logger.error(f"Error checking idle time: {e}")
 
     def lock_database(self):
         """
@@ -70,5 +73,5 @@ class DatabaseLockManager:
                 # Try again if unlock failed
                 return self.lock_database()
         else:
-            print("Password input cancelled")
+            logger.debug("Password input cancelled")
             return False

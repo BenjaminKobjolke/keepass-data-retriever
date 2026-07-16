@@ -9,13 +9,13 @@ from .dark_entry import DarkEntry
 from .dark_button import DarkButton
 
 __all__ = [
-    'SearchWindow',
-    'ResultsView',
-    'ActionButtons',
-    'HotkeyManager',
-    'WindowManager',
-    'StatusDisplay',
-    'InputManager',
-    'DarkEntry',
-    'DarkButton'
+    "SearchWindow",
+    "ResultsView",
+    "ActionButtons",
+    "HotkeyManager",
+    "WindowManager",
+    "StatusDisplay",
+    "InputManager",
+    "DarkEntry",
+    "DarkButton",
 ]

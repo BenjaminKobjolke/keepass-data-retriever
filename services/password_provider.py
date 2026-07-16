@@ -3,6 +3,9 @@
 import sys
 from typing import Callable, Tuple, Optional
 from ui.password_dialog import PasswordDialog
+from ui.logger import Logger
+
+logger = Logger.get_instance()
 
 
 class PasswordProvider:
@@ -20,7 +23,7 @@ class PasswordProvider:
 
         # Check for --password argument (for backward compatibility)
         for i, arg in enumerate(args):
-            if arg == '--password' and i + 1 < len(args):
+            if arg == "--password" and i + 1 < len(args):
                 return args[i + 1]
 
         # If no password provided, show password dialog
@@ -28,7 +31,9 @@ class PasswordProvider:
         return dialog.get_password()
 
     @staticmethod
-    def get_password_with_validation(validator: Callable[[str], Tuple[bool, Optional[str]]], parent=None):
+    def get_password_with_validation(
+        validator: Callable[[str], Tuple[bool, Optional[str]]], parent=None
+    ):
         """
         Get password using GUI dialog with inline validation.
 
@@ -43,13 +48,13 @@ class PasswordProvider:
 
         # Check for --password argument first (for backward compatibility)
         for i, arg in enumerate(args):
-            if arg == '--password' and i + 1 < len(args):
+            if arg == "--password" and i + 1 < len(args):
                 password = args[i + 1]
                 # Validate command-line password
                 success, _ = validator(password)
                 if success:
                     return password
-                print("Command line password is incorrect")
+                logger.warning("Command line password is incorrect")
                 # Fall through to show dialog
 
         # Show dialog with validator
@@ -68,7 +73,9 @@ class PasswordProvider:
         return dialog.get_password()
 
     @staticmethod
-    def get_password_for_reload_with_validation(validator: Callable[[str], Tuple[bool, Optional[str]]], parent=None):
+    def get_password_for_reload_with_validation(
+        validator: Callable[[str], Tuple[bool, Optional[str]]], parent=None
+    ):
         """
         Get password for reload with inline validation - always show dialog.
 

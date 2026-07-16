@@ -4,6 +4,9 @@ import tkinter as tk
 import time
 import win32gui
 import win32con
+from .logger import Logger
+
+logger = Logger.get_instance()
 
 
 class WindowFocusManager:
@@ -42,13 +45,13 @@ class WindowFocusManager:
                 win32gui.ShowWindow(self.hwnd, win32con.SW_SHOW)
                 win32gui.SetForegroundWindow(self.hwnd)
             except Exception as e:
-                print(f"Win32 focus error (non-critical): {e}")
+                logger.error(f"Win32 focus error (non-critical): {e}")
 
             # Give window time to get focus
             time.sleep(0.1)
 
         except Exception as e:
-            print(f"Focus error (non-critical): {e}")
+            logger.error(f"Focus error (non-critical): {e}")
 
     def start_focus_monitoring(self, on_focus_lost=None):
         """
@@ -57,7 +60,7 @@ class WindowFocusManager:
         Args:
             on_focus_lost: Callback function to call when focus is lost
         """
-        print("Starting focus check")
+        logger.debug("Starting focus check")
         self.focus_check_active = True
         self.on_focus_lost_callback = on_focus_lost
         self._check_focus_timer()
@@ -78,12 +81,12 @@ class WindowFocusManager:
 
                 # Hide if active window is not our window
                 if active_hwnd != self.hwnd:
-                    print("Window lost focus")
+                    logger.debug("Window lost focus")
                     if self.on_focus_lost_callback:
                         self.on_focus_lost_callback()
                     return  # Stop checking after window loses focus
             except Exception as e:
-                print(f"Focus check error (non-critical): {e}")
+                logger.error(f"Focus check error (non-critical): {e}")
 
         # Check every second
         self.root.after(1000, self._check_focus_timer)

@@ -7,6 +7,9 @@ from pykeepass import PyKeePass
 from config import config
 from services.password_provider import PasswordProvider
 from ui.state_manager import AppState
+from ui.logger import Logger
+
+logger = Logger.get_instance()
 
 
 class DatabaseManager:
@@ -35,15 +38,15 @@ class DatabaseManager:
         # Check for --database argument (for backward compatibility)
         args = sys.argv[1:]
         for i, arg in enumerate(args):
-            if arg == '--database' and i + 1 < len(args):
+            if arg == "--database" and i + 1 < len(args):
                 return args[i + 1]
 
         # Check environment variable (for backward compatibility)
-        if env_path := os.getenv('KEEPASS_DATABASE'):
+        if env_path := os.getenv("KEEPASS_DATABASE"):
             return env_path
 
         # Use default
-        return 'Database.kdbx'
+        return "Database.kdbx"
 
     def create_password_validator(self) -> Callable[[str], Tuple[bool, Optional[str]]]:
         """
@@ -65,7 +68,12 @@ class DatabaseManager:
                 return (True, None)
             except Exception as e:
                 error_str = str(e).lower()
-                if 'password' in error_str or 'credentials' in error_str or 'decrypt' in error_str or 'invalid' in error_str:
+                if (
+                    "password" in error_str
+                    or "credentials" in error_str
+                    or "decrypt" in error_str
+                    or "invalid" in error_str
+                ):
                     return (False, "Incorrect password. Please try again.")
                 else:
                     return (False, f"Database error: {str(e)}")
@@ -83,14 +91,16 @@ class DatabaseManager:
         # second hotkey press while the password dialog is open would trigger
         # a recursive connect_database call and stack dialogs.
         if self._connecting:
-            print("connect_database already in progress, skipping re-entry")
+            logger.debug("connect_database already in progress, skipping re-entry")
             return False
         self._connecting = True
         try:
             db_path = self.get_database_path()
             if not os.path.exists(db_path):
-                print(f"Error: Database file not found: {db_path}")
-                print("Configure database_path in settings.ini, use --database argument, or set KEEPASS_DATABASE environment variable")
+                logger.error(f"Error: Database file not found: {db_path}")
+                logger.info(
+                    "Configure database_path in settings.ini, use --database argument, or set KEEPASS_DATABASE environment variable"
+                )
                 return False
 
             # Create validator and get password with inline validation
@@ -99,14 +109,14 @@ class DatabaseManager:
             password = PasswordProvider.get_password_with_validation(validator, parent=parent)
 
             if not password:  # User cancelled the dialog
-                print("Password input cancelled")
+                logger.debug("Password input cancelled")
                 return False
 
             # Connection already established by validator
-            print(f"Successfully connected to KeePass database: {db_path}")
+            logger.info(f"Successfully connected to KeePass database: {db_path}")
             return True
         except Exception as e:
-            print(f"Error opening KeePass database: {e}")
+            logger.error(f"Error opening KeePass database: {e}")
             return False
         finally:
             self._connecting = False
@@ -130,41 +140,43 @@ class DatabaseManager:
             bool: True if reload successful, False otherwise
         """
         if self._connecting:
-            print("connect_database already in progress, skipping reload re-entry")
+            logger.debug("connect_database already in progress, skipping reload re-entry")
             return False
         self._connecting = True
         try:
             # Get database path
             db_path = self.get_database_path()
             if not os.path.exists(db_path):
-                print(f"Error: Database file not found: {db_path}")
+                logger.error(f"Error: Database file not found: {db_path}")
                 return False
 
             # Create validator and prompt for password with validation
             validator = self.create_password_validator()
             parent = self.window.root if self.window else None
-            password = PasswordProvider.get_password_for_reload_with_validation(validator, parent=parent)
+            password = PasswordProvider.get_password_for_reload_with_validation(
+                validator, parent=parent
+            )
 
             if not password:  # User cancelled the dialog
-                print("Password input cancelled")
+                logger.debug("Password input cancelled")
                 return False
 
             # Connection already established by validator
-            print("Database reloaded successfully")
+            logger.info("Database reloaded successfully")
 
             # Transition back to INITIAL state if state manager exists
             if self.state_manager:
                 self.state_manager.transition_to(AppState.INITIAL)
             return True
         except Exception as e:
-            print(f"Error reloading database: {e}")
+            logger.error(f"Error reloading database: {e}")
             return False
         finally:
             self._connecting = False
 
     def reload_database(self):
         """Reload the KeePass database."""
-        print("\nReloading database...")
+        logger.info("Reloading database...")
         # Clear current database connection
         self.kp = None
         self.is_locked = False
@@ -194,8 +206,8 @@ class DatabaseManager:
             db_path = self.get_database_path()
             self.kp = PyKeePass(db_path, password)
             self.is_locked = False
-            print("Database unlocked successfully")
+            logger.info("Database unlocked successfully")
             return True
         except Exception as e:
-            print(f"Error unlocking database: {e}")
+            logger.error(f"Error unlocking database: {e}")
             return False

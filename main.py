@@ -12,6 +12,9 @@ from config import config
 from database.database_manager import DatabaseManager
 from database.database_lock_manager import DatabaseLockManager
 from services.entry_search_service import EntrySearchService
+from ui.logger import Logger
+
+logger = Logger.get_instance()
 
 
 class KeePassRetriever:
@@ -20,10 +23,7 @@ class KeePassRetriever:
         self.mutex = None
         self._mutex_released = False
         if not self._ensure_single_instance():
-            messagebox.showerror(
-                "Already Running",
-                "KeePass Data Retriever is already running."
-            )
+            messagebox.showerror("Already Running", "KeePass Data Retriever is already running.")
             sys.exit(0)
 
         # Safety net: release mutex on interpreter shutdown / uncaught exception
@@ -79,25 +79,26 @@ class KeePassRetriever:
         if not entry:
             entry = self.window.input.single_entry
         if not entry:
-            print("No entry selected")
+            logger.debug("No entry selected")
             return
 
         try:
-            if action == 'username' and entry.username:
+            if action == "username" and entry.username:
                 pyperclip.copy(entry.username)
-            elif action == 'password' and entry.password:
+            elif action == "password" and entry.password:
                 pyperclip.copy(entry.password)
-            elif action == 'url' and entry.url:
+            elif action == "url" and entry.url:
                 pyperclip.copy(entry.url)
-            elif action == 'open_url' and entry.url:
+            elif action == "open_url" and entry.url:
                 import webbrowser
+
                 webbrowser.open(entry.url)
         except Exception as e:
-            print(f"Error handling action {action}: {e}")
+            logger.error(f"Error handling action {action}: {e}")
 
     def exit_application(self):
         """Exit the application."""
-        print("\nExiting application...")
+        logger.info("Exiting application...")
         self._release_mutex()
         sys.exit(0)
 
@@ -110,7 +111,7 @@ class KeePassRetriever:
                 self.handle_action,
                 self.handle_select,
                 self.db_manager.lazy_connect_database,  # Callback for lazy connection
-                self.search_service.get_recent_entries  # Callback for getting recent entries
+                self.search_service.get_recent_entries,  # Callback for getting recent entries
             )
 
             # Wire up managers to window and state manager
@@ -130,19 +131,19 @@ class KeePassRetriever:
 
             hotkey = config.get_search_hotkey()
             idle_timeout = config.get_database_idle_timeout()
-            print(f"KeePass Data Retriever running. Press {hotkey} to open search window.")
-            print("Right-click the window for menu options.")
-            print(f"Database will lock after {idle_timeout} seconds of inactivity.")
-            print("Type /exit in any search box to exit the application.")
-            print("Type /reload in any search box to reload the database.")
+            logger.info(f"KeePass Data Retriever running. Press {hotkey} to open search window.")
+            logger.info("Right-click the window for menu options.")
+            logger.info(f"Database will lock after {idle_timeout} seconds of inactivity.")
+            logger.info("Type /exit in any search box to exit the application.")
+            logger.info("Type /reload in any search box to reload the database.")
 
             self.window.run()
 
         except KeyboardInterrupt:
-            print("\nExiting...")
+            logger.info("Exiting...")
             sys.exit(0)
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
             sys.exit(1)
         finally:
             self._release_mutex()
@@ -153,5 +154,5 @@ def main():
     app.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

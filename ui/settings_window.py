@@ -6,24 +6,14 @@ from typing import Callable, Dict
 from .theme_manager import ThemeManager
 from .dark_button import DarkButton
 from config import config
+from theme_colors import ThemeColors
 
 
 class SettingsWindow:
     """Settings window for configuring application themes."""
 
-    # Color key to display label mapping
-    COLOR_LABELS = {
-        'bg_color': 'Background',
-        'fg_color': 'Text',
-        'entry_bg': 'Input Background',
-        'entry_fg': 'Input Text',
-        'button_bg': 'Button Background',
-        'button_fg': 'Button Text',
-        'highlight_bg': 'Highlight',
-        'recent_entry_bg': 'Recent Entry',
-        'action_highlight_bg': 'Action Highlight',
-        'button_hover_bg': 'Button Hover',
-    }
+    # Color key to display label mapping — declared by ThemeColors itself
+    COLOR_LABELS = ThemeColors.labels()
 
     def __init__(self, on_close: Callable = None, on_apply: Callable = None):
         """
@@ -42,8 +32,8 @@ class SettingsWindow:
         # Create window
         self.root = tk.Toplevel()
         self.root.title("Settings - Theme Configuration")
-        self.root.configure(bg=ThemeManager.get_color('bg_color'))
-        self.root.attributes('-topmost', True)
+        self.root.configure(bg=ThemeManager.get_color("bg_color"))
+        self.root.attributes("-topmost", True)
         self.root.geometry("450x550")
         self.root.resizable(False, False)
 
@@ -63,12 +53,12 @@ class SettingsWindow:
         height = self.root.winfo_height()
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
-        self.root.geometry(f'{width}x{height}+{x}+{y}')
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def _create_ui(self):
         """Create the settings UI"""
-        bg_color = ThemeManager.get_color('bg_color')
-        fg_color = ThemeManager.get_color('fg_color')
+        bg_color = ThemeManager.get_color("bg_color")
+        fg_color = ThemeManager.get_color("fg_color")
 
         # Main frame
         main_frame = tk.Frame(self.root, bg=bg_color)
@@ -80,7 +70,7 @@ class SettingsWindow:
             text="Theme Settings",
             bg=bg_color,
             fg=fg_color,
-            font=('Segoe UI', 14, 'bold')
+            font=("Segoe UI", 14, "bold"),
         )
         title_label.pack(pady=(0, 15))
 
@@ -89,26 +79,22 @@ class SettingsWindow:
         preset_frame.pack(fill=tk.X, pady=(0, 15))
 
         preset_label = tk.Label(
-            preset_frame,
-            text="Preset:",
-            bg=bg_color,
-            fg=fg_color,
-            font=('Segoe UI', 11)
+            preset_frame, text="Preset:", bg=bg_color, fg=fg_color, font=("Segoe UI", 11)
         )
         preset_label.pack(side=tk.LEFT)
 
         self.preset_var = tk.StringVar(value=config.get_theme_preset())
-        preset_options = ['dark', 'light', 'custom']
+        preset_options = ["dark", "light", "custom"]
 
         self.preset_menu = ttk.Combobox(
             preset_frame,
             textvariable=self.preset_var,
             values=preset_options,
-            state='readonly',
-            width=15
+            state="readonly",
+            width=15,
         )
         self.preset_menu.pack(side=tk.LEFT, padx=(10, 0))
-        self.preset_menu.bind('<<ComboboxSelected>>', self._on_preset_change)
+        self.preset_menu.bind("<<ComboboxSelected>>", self._on_preset_change)
 
         # Scrollable colors frame
         colors_container = tk.Frame(main_frame, bg=bg_color)
@@ -120,8 +106,7 @@ class SettingsWindow:
         self.colors_frame = tk.Frame(canvas, bg=bg_color)
 
         self.colors_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
         canvas.create_window((0, 0), window=self.colors_frame, anchor="nw")
@@ -143,7 +128,7 @@ class SettingsWindow:
             text="Transparency:",
             bg=bg_color,
             fg=fg_color,
-            font=('Segoe UI', 11)
+            font=("Segoe UI", 11),
         )
         trans_label.pack(side=tk.LEFT)
 
@@ -158,8 +143,8 @@ class SettingsWindow:
             bg=bg_color,
             fg=fg_color,
             highlightthickness=0,
-            troughcolor=ThemeManager.get_color('entry_bg'),
-            length=200
+            troughcolor=ThemeManager.get_color("entry_bg"),
+            length=200,
         )
         self.transparency_scale.pack(side=tk.LEFT, padx=(10, 0))
 
@@ -168,12 +153,12 @@ class SettingsWindow:
             text=f"{self.transparency_var.get():.0%}",
             bg=bg_color,
             fg=fg_color,
-            font=('Segoe UI', 10),
-            width=5
+            font=("Segoe UI", 10),
+            width=5,
         )
         self.trans_value_label.pack(side=tk.LEFT, padx=(5, 0))
 
-        self.transparency_var.trace_add('write', self._on_transparency_change)
+        self.transparency_var.trace_add("write", self._on_transparency_change)
 
         # Buttons frame
         buttons_frame = tk.Frame(main_frame, bg=bg_color)
@@ -181,40 +166,26 @@ class SettingsWindow:
 
         # Reset button
         reset_btn = DarkButton(
-            buttons_frame,
-            text="Reset to Default",
-            command=self._reset_to_defaults
+            buttons_frame, text="Reset to Default", command=self._reset_to_defaults
         )
         reset_btn.pack(side=tk.LEFT)
 
         # Cancel button
-        cancel_btn = DarkButton(
-            buttons_frame,
-            text="Cancel",
-            command=self._on_cancel
-        )
+        cancel_btn = DarkButton(buttons_frame, text="Cancel", command=self._on_cancel)
         cancel_btn.pack(side=tk.RIGHT)
 
         # Save button
-        save_btn = DarkButton(
-            buttons_frame,
-            text="Save & Close",
-            command=self._save_and_close
-        )
+        save_btn = DarkButton(buttons_frame, text="Save & Close", command=self._save_and_close)
         save_btn.pack(side=tk.RIGHT, padx=(0, 10))
 
         # Apply button
-        apply_btn = DarkButton(
-            buttons_frame,
-            text="Apply",
-            command=self._apply_colors
-        )
+        apply_btn = DarkButton(buttons_frame, text="Apply", command=self._apply_colors)
         apply_btn.pack(side=tk.RIGHT, padx=(0, 10))
 
     def _create_color_row(self, parent, label: str, color_key: str):
         """Create a row with label, color preview, and picker button"""
-        bg_color = ThemeManager.get_color('bg_color')
-        fg_color = ThemeManager.get_color('fg_color')
+        bg_color = ThemeManager.get_color("bg_color")
+        fg_color = ThemeManager.get_color("fg_color")
 
         row_frame = tk.Frame(parent, bg=bg_color)
         row_frame.pack(fill=tk.X, pady=3)
@@ -225,9 +196,9 @@ class SettingsWindow:
             text=label,
             bg=bg_color,
             fg=fg_color,
-            font=('Segoe UI', 10),
+            font=("Segoe UI", 10),
             width=15,
-            anchor='w'
+            anchor="w",
         )
         lbl.pack(side=tk.LEFT)
 
@@ -238,8 +209,8 @@ class SettingsWindow:
             bg=self.color_values.get(color_key, ThemeManager.get_color(color_key)),
             width=8,
             height=1,
-            relief='solid',
-            borderwidth=1
+            relief="solid",
+            borderwidth=1,
         )
         preview.pack(side=tk.LEFT, padx=(10, 0))
         self.color_previews[color_key] = preview
@@ -250,8 +221,8 @@ class SettingsWindow:
             text=self.color_values.get(color_key, ThemeManager.get_color(color_key)),
             bg=bg_color,
             fg=fg_color,
-            font=('Segoe UI', 9),
-            width=8
+            font=("Segoe UI", 9),
+            width=8,
         )
         hex_label.pack(side=tk.LEFT, padx=(5, 0))
 
@@ -260,9 +231,7 @@ class SettingsWindow:
 
         # Pick button
         pick_btn = DarkButton(
-            row_frame,
-            text="Pick",
-            command=lambda k=color_key: self._pick_color(k)
+            row_frame, text="Pick", command=lambda k=color_key: self._pick_color(k)
         )
         pick_btn.pack(side=tk.RIGHT)
 
@@ -274,17 +243,17 @@ class SettingsWindow:
         if preset in ThemeManager.PRESETS:
             colors = ThemeManager.PRESETS[preset]
         else:
-            colors = config.get_all_theme_colors()
+            colors = config.get_all_theme_colors().as_dict()
 
         for color_key in self.COLOR_LABELS.keys():
             color = colors.get(color_key, ThemeManager.get_color(color_key))
             self.color_values[color_key] = color
             if color_key in self.color_previews:
                 self.color_previews[color_key].configure(bg=color)
-                if hasattr(self.color_previews[color_key], 'hex_label'):
+                if hasattr(self.color_previews[color_key], "hex_label"):
                     self.color_previews[color_key].hex_label.configure(text=color)
 
-        self.transparency_value = colors.get('transparency', ThemeManager.get_transparency())
+        self.transparency_value = colors.get("transparency", ThemeManager.get_transparency())
         if isinstance(self.transparency_value, str):
             self.transparency_value = float(self.transparency_value)
         self.transparency_var.set(self.transparency_value)
@@ -292,17 +261,19 @@ class SettingsWindow:
     def _pick_color(self, color_key: str):
         """Open color picker dialog"""
         current_color = self.color_values.get(color_key, ThemeManager.get_color(color_key))
-        result = colorchooser.askcolor(color=current_color, title=f"Choose {self.COLOR_LABELS[color_key]} Color")
+        result = colorchooser.askcolor(
+            color=current_color, title=f"Choose {self.COLOR_LABELS[color_key]} Color"
+        )
 
         if result[1]:  # User selected a color
             new_color = result[1]
             self.color_values[color_key] = new_color
             self.color_previews[color_key].configure(bg=new_color)
-            if hasattr(self.color_previews[color_key], 'hex_label'):
+            if hasattr(self.color_previews[color_key], "hex_label"):
                 self.color_previews[color_key].hex_label.configure(text=new_color)
 
             # Switch to custom preset when user picks a color
-            self.preset_var.set('custom')
+            self.preset_var.set("custom")
 
     def _on_preset_change(self, event=None):
         """Handle preset selection change"""
@@ -314,9 +285,9 @@ class SettingsWindow:
                     self.color_values[color_key] = color
                     if color_key in self.color_previews:
                         self.color_previews[color_key].configure(bg=color)
-                        if hasattr(self.color_previews[color_key], 'hex_label'):
+                        if hasattr(self.color_previews[color_key], "hex_label"):
                             self.color_previews[color_key].hex_label.configure(text=color)
-                elif color_key == 'transparency':
+                elif color_key == "transparency":
                     self.transparency_var.set(color)
 
     def _on_transparency_change(self, *args):
@@ -329,10 +300,12 @@ class SettingsWindow:
         """Apply colors without closing"""
         preset = self.preset_var.get()
 
-        if preset in ('dark', 'light'):
+        if preset in ("dark", "light"):
             ThemeManager.apply_preset(preset)
         else:
-            ThemeManager.apply_custom_colors(self.color_values, self.transparency_value)
+            ThemeManager.apply_custom_colors(
+                ThemeColors(**self.color_values), self.transparency_value
+            )
 
         config.save_config()
 
@@ -346,7 +319,7 @@ class SettingsWindow:
 
     def _reset_to_defaults(self):
         """Reset to default dark theme"""
-        self.preset_var.set('dark')
+        self.preset_var.set("dark")
         self._on_preset_change()
 
     def _on_cancel(self):

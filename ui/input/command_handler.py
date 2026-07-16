@@ -10,11 +10,7 @@ logger = Logger.get_instance()
 class CommandHandler:
     """Handles slash commands in input fields."""
 
-    COMMANDS = {
-        '/exit': Events.EXIT,
-        '/reload': Events.RELOAD,
-        '/settings': Events.SETTINGS
-    }
+    COMMANDS = {"/exit": Events.EXIT, "/reload": Events.RELOAD, "/settings": Events.SETTINGS}
 
     def __init__(self):
         """Initialize command handler."""
@@ -36,7 +32,7 @@ class CommandHandler:
             event = self.COMMANDS[command]
             logger.info(f"{command[1:].capitalize()} command detected")
             # Clear input for non-exit commands
-            if clear_callback and command != '/exit':
+            if clear_callback and command != "/exit":
                 clear_callback()
             EventBus.publish(event)
             return True
