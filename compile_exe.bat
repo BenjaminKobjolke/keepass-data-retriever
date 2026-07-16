@@ -30,12 +30,25 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo.
-echo [3/3] Copying settings.ini to dist...
+echo [3/4] Copying settings.ini to dist...
 xcopy "settings.ini" "dist\" /Y /I
+
+set "DEPLOY_DIR=E:\[--Sync--]\BKTools\Apps\keepass-data-retriever"
+echo.
+echo [4/4] Deploying to %DEPLOY_DIR%...
+if not exist "%DEPLOY_DIR%" mkdir "%DEPLOY_DIR%"
+copy /Y "dist\KeepassDataRetriever.exe" "%DEPLOY_DIR%\"
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: Failed to copy executable to %DEPLOY_DIR%
+    pause
+    exit /b 1
+)
+rem Don't clobber existing config on target
+if not exist "%DEPLOY_DIR%\settings.ini" copy "settings.ini" "%DEPLOY_DIR%\"
 
 echo.
 echo ========================================
-echo  Build complete: dist\KeepassDataRetriever.exe
+echo  Build complete: %DEPLOY_DIR%\KeepassDataRetriever.exe
 echo ========================================
 echo.
 pause
