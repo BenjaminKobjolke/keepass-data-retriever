@@ -27,7 +27,7 @@ class StatusDisplay:
                 text += f"\nURL: {shorten_url(single_entry.url)}"
             self.set_text(text)
         else:
-            self.set_text(f"Found {len(entries)} entries. Press 1-{len(entries)} to select.")
+            self.set_text(f"Found {len(entries)} entries. Use ↑/↓ and Enter to select.")
 
     def show_selected_entry(self, entry):
         """Show selected entry status"""

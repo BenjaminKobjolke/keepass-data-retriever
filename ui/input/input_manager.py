@@ -161,6 +161,12 @@ class InputManager:
             return "break"
         return False
 
+    def clear_entries(self):
+        """Clear all entry state so stale entries can't be re-rendered by the filter."""
+        self.entries = []
+        self.original_entries = []
+        self.current_entry = None
+
     def _handle_filter_input(self, event):
         """Handle key release in search input for filtering results"""
         # Skip special keys that don't change text

@@ -195,7 +195,8 @@ class SearchWindow:
         current_state = self.state_manager.get_current_state()
         if current_state == AppState.INITIAL:
             logger.debug("In INITIAL state, clearing entries from previous windows")
-            self.input.entries = []
+            self.input.clear_entries()
+            self.recent_entries_handler.set_recent_list_active(False)
             self.window.set_expanded(False)
             self.status.set_text("")
             return
@@ -276,6 +277,8 @@ class SearchWindow:
             is_recent = self.recent_entries_handler.is_recent_list_active
             self.results.show_entries(filtered_entries, is_recent_list=is_recent)
             self.status.show_search_results(filtered_entries)
+            # Window collapses on every show(); expand or auto_resize is a no-op
+            self.window.set_expanded(True)
             self.window.auto_resize()
         else:
             self.status.set_text("No matching entries")
