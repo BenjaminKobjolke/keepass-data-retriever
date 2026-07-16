@@ -40,6 +40,7 @@ claude-plans
 .taskmaster
 /nul
 /prompts/git_commit.md
+tmp/commit_msg.tmp
 
 # graphify build artifacts
 graphify-out/
