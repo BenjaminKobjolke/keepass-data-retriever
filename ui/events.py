@@ -21,6 +21,7 @@ class Events:
     EXIT = "exit"
     RELOAD = "reload"
     SETTINGS = "settings"
+    FRAME = "frame"
     FILTER = "filter"
 
 

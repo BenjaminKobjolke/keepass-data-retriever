@@ -5,6 +5,7 @@ from tkinter import ttk, colorchooser
 from typing import Callable, Dict
 from .theme_manager import ThemeManager
 from .dark_button import DarkButton
+from .window_manager import apply_frame_preference
 from config import config
 from theme_colors import ThemeColors
 
@@ -36,9 +37,12 @@ class SettingsWindow:
         self.root.attributes("-topmost", True)
         self.root.geometry("450x550")
         self.root.resizable(False, False)
+        apply_frame_preference(self.root)
 
         # Handle window close
         self.root.protocol("WM_DELETE_WINDOW", self._on_cancel)
+        # Escape closes the window — needed when frameless (no title bar close button)
+        self.root.bind("<Escape>", lambda e: self._on_cancel())
 
         self._create_ui()
         self._load_current_colors()

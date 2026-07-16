@@ -5,7 +5,7 @@ import win32api
 import win32con
 from .dark_entry import DarkEntry
 from .dark_button import DarkButton
-from .window_manager import WindowManager
+from .window_manager import WindowManager, apply_frame_preference
 from .logger import Logger
 
 logger = Logger.get_instance()
@@ -30,6 +30,7 @@ class PasswordDialog:
         else:
             self.root = tk.Tk()
         self.root.withdraw()  # Hide initially to prevent white flash
+        apply_frame_preference(self.root)
 
         # Configure window
         self.root.title(title)

@@ -28,6 +28,7 @@ class Config:
             "window_position": "mouse",  # Window position mode: 'mouse', 'center', or 'center_screen'
             "paste_mode": "true",  # Use paste instead of typing (avoids dead key issues)
             "window_width": "500",  # Window width in pixels
+            "show_frame": "false",  # Native OS window frames (toggled via /frame)
         }
         self.config["Hotkeys"] = {"search_hotkey": "alt + shift + F8"}
         self.config["Theme"] = {
@@ -118,6 +119,20 @@ class Config:
             return max(350, min(width, 800))
         except (configparser.NoSectionError, configparser.NoOptionError, ValueError):
             return 500
+
+    def get_show_frame(self) -> bool:
+        """Get show_frame from config - when true, windows keep native OS frames"""
+        try:
+            show_frame = self.config.get("General", "show_frame").lower()
+            return show_frame in ("true", "yes", "1", "on")
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return False  # Default: frameless windows
+
+    def set_show_frame(self, value: bool) -> None:
+        """Set show_frame (native OS window frames)"""
+        if "General" not in self.config:
+            self.config["General"] = {}
+        self.config["General"]["show_frame"] = "true" if value else "false"
 
     def get_theme_preset(self) -> str:
         """Get current theme preset name"""

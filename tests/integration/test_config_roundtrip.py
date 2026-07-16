@@ -56,3 +56,17 @@ def test_theme_palette_roundtrip_through_real_ini(tmp_cwd):
 def test_missing_ini_yields_full_default_palette(tmp_cwd):
     cfg = _fresh_config()
     assert cfg.get_all_theme_colors() == ThemeColors()
+
+
+def test_show_frame_defaults_to_false(tmp_cwd):
+    cfg = _fresh_config()
+    assert cfg.get_show_frame() is False
+
+
+def test_show_frame_roundtrip_through_real_ini(tmp_cwd):
+    cfg = _fresh_config()
+    cfg.set_show_frame(True)
+    cfg.save_config()
+
+    reloaded = _fresh_config()
+    assert reloaded.get_show_frame() is True

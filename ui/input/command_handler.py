@@ -10,7 +10,12 @@ logger = Logger.get_instance()
 class CommandHandler:
     """Handles slash commands in input fields."""
 
-    COMMANDS = {"/exit": Events.EXIT, "/reload": Events.RELOAD, "/settings": Events.SETTINGS}
+    COMMANDS = {
+        "/exit": Events.EXIT,
+        "/reload": Events.RELOAD,
+        "/settings": Events.SETTINGS,
+        "/frame": Events.FRAME,
+    }
 
     def __init__(self):
         """Initialize command handler."""

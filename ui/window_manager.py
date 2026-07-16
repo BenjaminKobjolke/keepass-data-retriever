@@ -12,6 +12,11 @@ from .logger import Logger
 logger = Logger.get_instance()
 
 
+def apply_frame_preference(window: tk.Misc) -> None:
+    """Frameless by default; native frame when [General] show_frame is on."""
+    window.overrideredirect(not config.get_show_frame())
+
+
 class WindowManager:
     # Window sizes
     WINDOW_WIDTH = config.get_window_width()
@@ -39,7 +44,7 @@ class WindowManager:
         self._auto_resize_id = None
 
         # Configure window
-        self.root.overrideredirect(True)
+        apply_frame_preference(self.root)
         self.root.attributes("-topmost", True, "-alpha", ThemeManager.TRANSPARENCY)
         self.root.configure(bg=ThemeManager.BG_COLOR)
 
@@ -64,6 +69,19 @@ class WindowManager:
 
         # Start minimized
         self.root.withdraw()
+
+    def refresh_frame(self):
+        """Re-apply frame preference. Windows re-wraps the toplevel on
+        overrideredirect changes, so the HWND changes and must be refreshed
+        (else the focus monitor hides the window / targets a stale handle)."""
+        self.root.withdraw()
+        apply_frame_preference(self.root)
+        self.root.update_idletasks()
+        self.hwnd = win32gui.GetParent(self.root.winfo_id())
+        self.focus_manager.hwnd = self.hwnd
+        self.root.attributes("-topmost", True, "-alpha", ThemeManager.TRANSPARENCY)
+        # ponytail: unconditional re-show — /frame is typed into the visible main window
+        self.focus_manager.force_focus()
 
     def _create_tray_menu(self):
         """Create system tray menu"""

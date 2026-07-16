@@ -101,6 +101,7 @@ class SearchWindow:
         EventBus.subscribe(Events.EXIT, self._handle_exit)
         EventBus.subscribe(Events.RELOAD, self._handle_reload)
         EventBus.subscribe(Events.SETTINGS, self._handle_settings)
+        EventBus.subscribe(Events.FRAME, self._handle_frame)
         EventBus.subscribe(Events.FILTER, self._handle_filter)
 
         # Settings window reference
@@ -324,6 +325,14 @@ class SearchWindow:
             self.settings_window = SettingsWindow(
                 on_close=self._on_settings_closed, on_apply=self._on_settings_applied
             )
+
+    def _handle_frame(self):
+        """Handle frame command: toggle native window frames for all windows."""
+        show_frame = not config.get_show_frame()
+        logger.info(f"Frame command detected, show_frame -> {show_frame}")
+        config.set_show_frame(show_frame)
+        config.save_config()
+        self.window.refresh_frame()
 
     def _on_settings_closed(self):
         """Called when settings window is closed."""
